@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Glass — Финансы</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ==== НАСТРОЙКА ОБЛАКА (Firebase) ====
+   Сюда вставляется конфиг из консоли Firebase. Пока он пустой — приложение
+   работает локально. Email ниже должен совпадать с пользователем в Firebase Auth. */
+const FIREBASE_CONFIG = null; const _u = {
+  apiKey: "AIzaSyCPCSRH532mYdyKqaBG9mgQUgz15LKkO7s",
+  authDomain: "topglass-finance.firebaseapp.com",
+  projectId: "topglass-finance",
+  storageBucket: "topglass-finance.firebasestorage.app",
+  messagingSenderId: "532546459271",
+  appId: "1:532546459271:web:ee82976cd865848865ca22"
+};
+const CLOUD_EMAIL = "owner@topglass.app";
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7fc; --bg2:#eaf0fb; --panel:#ffffff; --panel-br:#e2e8f4;
+  --txt:#1a2438; --dim:#6b7896; --accent:#2b8ac6; --accent2:#6d5ef0;
+  --good:#1f9d57; --warn:#d98a1f; --bad:#e05656; --radius:16px;
+  --c1:#2b8ac6; --c2:#1f9d8f; --c3:#7d54d4; --c4:#d9a520; --c5:#c0508a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Manrope',system-ui,sans-serif; background:
+  radial-gradient(1100px 500px at 85% -8%, rgba(109,94,240,.10), transparent 60%),
+  radial-gradient(900px 460px at -8% 20%, rgba(43,138,198,.10), transparent 60%),
+  linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  color:var(--txt); min-height:100vh; padding-bottom:60px;
+}
+header{padding:22px 26px 6px}
+.logo{font-family:'Unbounded',sans-serif;font-size:22px;letter-spacing:.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.logo em{font-style:normal}
+.logo-sub{font-size:12px;color:var(--dim)}
+nav{
+  display:flex;gap:5px;background:var(--panel);border:1px solid var(--panel-br);border-radius:12px;
+  padding:5px;margin:12px 26px 0;overflow-x:auto;scrollbar-width:thin;box-shadow:0 4px 16px rgba(30,50,90,.06);
+}
+nav button{background:none;border:none;color:var(--dim);font:600 12.5px 'Manrope';padding:9px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s;flex-shrink:0}
+nav button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 3px 10px rgba(43,138,198,.35)}
+nav button:hover:not(.on){color:var(--txt);background:var(--bg2)}
+main{padding:14px 26px;max-width:1320px;margin:0 auto}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{
+  background:var(--panel);border:1px solid var(--panel-br);border-radius:var(--radius);padding:18px;
+  position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(30,50,90,.07);
+}
+.kpis .card{border-top:3px solid var(--accent)}
+.kpis .card:nth-child(1){border-top-color:var(--c1)}
+.kpis .card:nth-child(2){border-top-color:var(--c2)}
+.kpis .card:nth-child(3){border-top-color:var(--c3)}
+.kpis .card:nth-child(4){border-top-color:var(--c4)}
+.kpis .card:nth-child(5){border-top-color:var(--c5)}
+#store-kpis .card:nth-child(1){border-top-color:var(--c1)}
+#store-kpis .card:nth-child(2){border-top-color:var(--c2)}
+#store-kpis .card:nth-child(3){border-top-color:var(--c3)}
+#store-kpis .card:nth-child(4){border-top-color:var(--c4)}
+#store-kpis .card{border-top:3px solid var(--accent)}
+.kpi-l{font-size:11.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.kpi-v{font-size:25px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums;color:var(--txt)}
+.kpi-s{font-size:12px;margin-top:4px;color:var(--dim)}
+.kpi-s.good{color:var(--good)} .kpi-s.warn{color:var(--warn)} .kpi-s.bad{color:var(--bad)}
+h2{font-size:15px;font-weight:800;margin:22px 0 10px;color:var(--txt)}
+h2 span{color:var(--dim);font-weight:500;font-size:13px}
+.charts{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.charts{grid-template-columns:1fr}}
+.chart-card{height:320px;padding:16px}
+.chart-card canvas{max-height:266px}
+.chart-tall{height:380px}.chart-tall canvas{max-height:326px}
+.ct{font-size:13px;font-weight:800;margin-bottom:8px;color:var(--txt)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{color:var(--dim);font-weight:700;text-align:right;padding:8px 9px;border-bottom:2px solid var(--panel-br);white-space:nowrap;position:sticky;top:0;background:#fff}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 9px;text-align:right;border-bottom:1px solid #eef2f9;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr.total td{font-weight:800;border-top:2px solid var(--panel-br);background:#f5f8ff}
+tbody tr:hover td,table tr:hover td{background:#f0f6ff}
+.scroll{overflow:auto;max-height:70vh;scrollbar-width:auto;scrollbar-color:var(--accent) #e6ecf6}
+.scroll::-webkit-scrollbar{height:12px;width:12px}
+.scroll::-webkit-scrollbar-track{background:#eef2f9;border-radius:8px}
+.scroll::-webkit-scrollbar-thumb{background:var(--accent);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+.scroll::-webkit-scrollbar-thumb:hover{background:var(--accent2);background-clip:content-box}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:1px}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.tag.good{background:rgba(31,157,87,.14);color:var(--good)}
+.tag.warn{background:rgba(217,138,31,.16);color:var(--warn)}
+.tag.bad{background:rgba(224,86,86,.14);color:var(--bad)}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.drop{border:1.5px dashed var(--panel-br);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:.15s;background:#fbfdff}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(43,138,198,.06)}
+.drop b{color:var(--accent)}
+.drop .hint{font-size:12px;color:var(--dim);margin-top:6px}
+.two{grid-template-columns:1fr 1fr}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+select,input[type=text],input[type=number]{
+  background:#fff;border:1px solid var(--panel-br);color:var(--txt);
+  border-radius:9px;padding:8px 10px;font:600 13px 'Manrope';outline:none;
+}
+input[type=number]{width:110px;text-align:right}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,138,198,.12)}
+.btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:10px 18px;font:800 13px 'Manrope';cursor:pointer;transition:.15s;box-shadow:0 3px 10px rgba(43,138,198,.3)}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--panel-br);box-shadow:none}
+.btn.ghost:hover{background:var(--bg2)}
+.btn.danger{background:#fff;color:var(--bad);border:1px solid rgba(224,86,86,.4);box-shadow:none}
+.btn.sm{padding:5px 10px;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{font-size:12.5px;color:var(--dim);line-height:1.55}
+.msg{padding:10px 14px;border-radius:10px;font-size:13px;margin:10px 0;display:none}
+.msg.ok{display:block;background:rgba(31,157,87,.12);color:var(--good)}
+.msg.err{display:block;background:rgba(224,86,86,.12);color:var(--bad)}
+.empty{padding:46px 20px;text-align:center;color:var(--dim)}
+.empty .big{font-family:'Unbounded';font-size:16px;color:var(--txt);margin-bottom:8px}
+.hidden{display:none!important}
+#gate{position:fixed;inset:0;background:linear-gradient(180deg,var(--bg),var(--bg2));z-index:99;display:flex;align-items:center;justify-content:center}
+#gate .card{width:min(360px,90vw);text-align:center;padding:30px}
+#gate input{width:100%;margin:14px 0;text-align:center;font-size:16px}
+#gate .err{color:var(--bad);font-size:12.5px;min-height:18px;margin-bottom:8px}
+.instr{line-height:1.7;font-size:13.5px}
+@media(max-width:820px){#hist-top{grid-template-columns:1fr!important}}
+.ana-hdr{text-align:center!important;background:linear-gradient(90deg,var(--accent),var(--accent2))!important;color:#fff!important;border-left:3px solid var(--accent2)!important;font-weight:800;letter-spacing:.5px}
+.mlabel{font-weight:700}
+.mrow-rev .mlabel{color:#2b8ac6} .mrow-rev td{background:rgba(43,138,198,.05)}
+.mrow-goods .mlabel{color:#7d54d4}
+.mrow-rent .mlabel{color:#d9a520}
+.mrow-salary .mlabel{color:#e05656}
+.mrow-other .mlabel{color:#1f9d8f}
+.mrow-exp td{background:rgba(224,86,86,.06);font-weight:700}
+.mrow-profit td{background:rgba(31,157,87,.08);font-weight:800}
+.mrow-profit .mlabel{color:#1f9d57}
+.mrow-stock .mlabel,.mrow-coefr .mlabel{color:#6d5ef0}
+.mrow-marg td,.mrow-zp td,.mrow-coefr td{background:rgba(109,94,240,.04)}
+.ana,.ana-sep{background:rgba(109,94,240,.05)}
+th.ana,th.ana-sep{background:rgba(109,94,240,.12)}
+tr:hover td.ana,tr:hover td.ana-sep{background:rgba(109,94,240,.10)}
+h2{position:relative;padding-left:14px}
+h2::before{content:'';position:absolute;left:0;top:2px;bottom:2px;width:5px;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.instr h3{margin:18px 0 6px;font-size:14px;color:var(--accent)}
+.instr li{margin:4px 0 4px 18px}
+footer{max-width:1320px;margin:30px auto 0;padding:0 26px;font-size:11.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div id="gate" class="hidden">
+  <div class="card">
+    <div class="logo">TOP <em>GLASS</em></div>
+    <div class="note" style="margin-top:6px">Введи пароль — устройство запомнит его, спрашивать больше не будем.</div>
+    <input type="password" id="gate-pw" placeholder="Пароль" onkeydown="if(event.key==='Enter')gateLogin()">
+    <div class="err" id="gate-err"></div>
+    <button class="btn" style="width:100%" onclick="gateLogin()">Войти</button>
+  </div>
+</div>
+<header>
+  <div class="logo">TOP <em>GLASS</em></div>
+  <div class="logo-sub">финансовый центр сети · Актобе · 8 точек</div>
+</header>
+<nav id="nav"></nav>
+<main>
+
+<!-- ДАШБОРД -->
+<section id="pg-dash">
+  <div id="dash-empty" class="empty hidden">
+    <div class="big">Данных пока нет</div>
+    <div>Открой вкладку «➕ Новый месяц» и импортируй Финансовый_Дашборд_v25.xlsx —<br>вся история появится сразу. Или добавь первый месяц вручную.</div>
+  </div>
+  <div id="dash-body">
+    <div class="row" style="margin-bottom:12px"><span class="note">Показатели за:</span><select id="dash-month" onchange="renderDash()"></select></div>
+    <div class="grid kpis">
+      <div class="card"><div class="kpi-l">Выручка сети</div><div class="kpi-v" id="k-rev">—</div><div class="kpi-s" id="k-rev-s"></div></div>
+      <div class="card"><div class="kpi-l">Прибыль</div><div class="kpi-v" id="k-prof">—</div><div class="kpi-s" id="k-prof-s"></div></div>
+      <div class="card"><div class="kpi-l">Чистая маржа</div><div class="kpi-v" id="k-marg">—</div><div class="kpi-s" id="k-marg-s"></div></div>
+      <div class="card"><div class="kpi-l">ЗП от выручки</div><div class="kpi-v" id="k-zp">—</div><div class="kpi-s" id="k-zp-s"></div></div>
+      <div class="card"><div class="kpi-l">Склад сети (закуп)</div><div class="kpi-v" id="k-stock">—</div><div class="kpi-s" id="k-stock-s"></div></div>
+    </div>
+    <div class="grid charts" style="margin-top:14px">
+      <div class="card chart-card"><div class="ct">Выручка и прибыль по месяцам</div><canvas id="ch-rev"></canvas></div>
+      <div class="card chart-card"><div class="ct">Выручка по точкам — выбранный месяц</div><canvas id="ch-dstores"></canvas></div>
+      <div class="card chart-card"><div class="ct">📉 Динамика расходов по статьям (линейный)</div><canvas id="ch-exp"></canvas></div>
+      <div class="card chart-card"><div class="ct">📦 Продажи vs Склад — все точки (столбчатый)</div><canvas id="ch-dstock"></canvas></div>
+      <div class="card chart-card"><div class="ct">🥧 Доля расходов в выручке — выбранный месяц</div><canvas id="ch-pie"></canvas></div>
+    </div>
+    <h2>Быстрая сводка по точкам</h2>
+    <div class="card scroll"><table id="t-dstores"></table></div>
+  </div>
+</section>
+
+<!-- ДАННЫЕ -->
+<section id="pg-data" class="hidden">
+  <div class="row" style="margin-bottom:12px">
+    <span class="note">Фильтр:</span>
+    <select id="data-store" onchange="renderData()"></select>
+    <select id="data-month" onchange="renderData()"></select>
+  </div>
+  <div class="card scroll"><table id="t-data"></table></div>
+  <p class="note" style="margin-top:10px">Итого расход = Товар + Аренда + ЗП + Прочее · Прибыль = Выручка − Итого расход · Чист. маржа = Прибыль/Выручка · % ЗП = ЗП/Выручка (≥20% подсвечивается) · Коэф. оборач. = Остаток(закуп) ÷ закуп месяца, т.е. запас в месяцах.</p>
+</section>
+
+<!-- ПО МЕСЯЦАМ -->
+<section id="pg-monthly" class="hidden">
+  <div class="card chart-card chart-tall"><div class="ct">Динамика сети по месяцам</div><canvas id="ch-monthly"></canvas></div>
+  <h2>Сводка по всей сети</h2>
+  <div class="card scroll"><table id="t-monthly"></table></div>
+</section>
+
+<!-- СКЛАД И ПРОДАЖИ -->
+<section id="pg-svp" class="hidden">
+  <div class="card chart-card chart-tall"><div class="ct">Склад (продажная цена) vs продажи по сети</div><canvas id="ch-svp"></canvas></div>
+  <h2>Склад vs продажи + коэффициент оборачиваемости <span>· склад в продажной цене · Коэф. = Выручка ÷ Склад · меньше 0.50 — затоварен (красный)</span></h2>
+  <div class="card scroll"><table id="t-svp"></table></div>
+</section>
+
+<!-- ОБЩАЯ ОБОРАЧИВАЕМОСТЬ -->
+<section id="pg-turn" class="hidden">
+  <div class="card chart-card chart-tall"><div class="ct">📈 Динамика коэффициента оборачиваемости — сеть</div><canvas id="ch-turn"></canvas></div>
+  <h2>Общая оборачиваемость — вся сеть <span>· Коэф. = Общие продажи ÷ Общий склад (в продажной цене)</span></h2>
+  <div class="card scroll"><table id="t-turn"></table></div>
+  <h2>Средний коэф. и остаток склада по точкам</h2>
+  <div class="card scroll"><table id="t-turn2"></table></div>
+</section>
+
+<!-- ОСТАТКИ СКЛАДОВ -->
+<section id="pg-stocks" class="hidden">
+  <h2 style="margin-top:0">Остатки складов по всем точкам <span>· таблица по месяцам + линейный график закупочной и продажной цены</span></h2>
+  <div id="stocks-all"></div>
+</section>
+
+<!-- ИСТОРИЯ ВЫРУЧКИ -->
+<section id="pg-hist" class="hidden">
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;gap:14px" id="hist-top">
+    <div class="card chart-card chart-tall"><div class="ct">📈 Выручка сети по годам (2019 → сейчас)</div><canvas id="ch-hist"></canvas></div>
+    <div class="card chart-card chart-tall"><div class="ct">📊 Итого по годам</div><canvas id="ch-hist-year"></canvas></div>
+  </div>
+  <h2>Итого за год</h2>
+  <div class="card scroll" style="max-width:420px"><table id="t-hist-year"></table></div>
+  <h2>История выручки — все магазины <span>· по месяцам, с 2019 года</span></h2>
+  <div class="card scroll"><table id="t-hist"></table></div>
+</section>
+
+<!-- МАГАЗИНЫ -->
+<section id="pg-stores" class="hidden">
+  <div class="row" style="margin-bottom:12px"><span class="note">Магазин:</span><select id="store-sel" onchange="renderStore()"></select></div>
+  <div class="grid kpis" id="store-kpis"></div>
+  <div class="grid charts" style="margin-top:14px">
+    <div class="card chart-card"><div class="ct">Выручка и прибыль</div><canvas id="ch-store1"></canvas></div>
+    <div class="card chart-card"><div class="ct">Структура расходов (100%)</div><canvas id="ch-store2"></canvas></div>
+  </div>
+  <h2>Все показатели по месяцам</h2>
+  <div class="card scroll"><table id="t-store"></table></div>
+  <h2>Доля статей в расходах</h2>
+  <div class="card scroll"><table id="t-store-pct"></table></div>
+</section>
+
+<!-- НОВЫЙ МЕСЯЦ -->
+<section id="pg-up" class="hidden">
+  <div class="row" style="margin-bottom:14px">
+    <span class="note">Месяц:</span>
+    <select id="up-month"></select><select id="up-year"></select>
+  </div>
+  <div class="grid two">
+    <div class="drop" id="drop-fin">
+      <div>📄 <b>Расход / Доход</b> — «Расход_Доход_за_….xlsx»</div>
+      <div class="hint">нажми или перетащи · колонки: Магазин, Выручка, Товар, Аренда, ЗП, Прочее</div>
+    </div>
+    <div class="drop" id="drop-stock">
+      <div>📦 <b>Остатки складов</b> — xlsx</div>
+      <div class="hint">колонки: Магазин, Закупная, Продажная (docx пересохрани как xlsx)</div>
+    </div>
+  </div>
+  <input type="file" id="file-fin" accept=".xlsx,.xls" class="hidden">
+  <input type="file" id="file-stock" accept=".xlsx,.xls" class="hidden">
+  <div class="msg" id="up-msg"></div>
+  <h2>Проверка перед сохранением <span>· всё можно поправить руками</span></h2>
+  <div class="card scroll"><table class="edit-t" id="t-edit"></table></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn" onclick="saveMonth()">Сохранить месяц</button>
+    <span class="note">Если месяц уже есть — данные перезапишутся.</span>
+  </div>
+
+  <h2>☁️ Облачное хранение</h2>
+  <div class="card">
+    <div class="note" style="margin-bottom:8px">Данные хранятся в облаке (Firebase) и синхронизируются между всеми устройствами автоматически. На новом устройстве нужно один раз ввести пароль — дальше всё само.</div>
+    <div class="note" id="cl-status">Проверяю облако…</div>
+  </div>
+
+  <h2>Импорт истории и резервная копия</h2>
+  <div class="grid two">
+    <div class="card">
+      <div class="ct">Импорт из Финансовый_Дашборд_v25.xlsx</div>
+      <div class="note" style="margin-bottom:10px">Читает лист «📊 Данные» (все месяцы × точки), «Остатки складов» и «История выручки».</div>
+      <div class="drop" id="drop-imp"><b>Выбрать файл дашборда</b></div>
+      <input type="file" id="file-imp" accept=".xlsx" class="hidden">
+    </div>
+    <div class="card">
+      <div class="ct">Резервная копия</div>
+      <div class="note" style="margin-bottom:10px">Скачай копию данных в JSON — и сможешь восстановить их в любой момент.</div>
+      <div class="row">
+        <button class="btn ghost" onclick="exportJSON()">Скачать копию</button>
+        <button class="btn ghost" onclick="document.getElementById('file-json').click()">Восстановить</button>
+        <input type="file" id="file-json" accept=".json" class="hidden">
+      </div>
+    </div>
+  </div>
+  <div class="msg" id="data-msg"></div>
+  <h2>Сохранённые месяцы</h2>
+  <div class="card scroll"><table id="t-months"></table></div>
+</section>
+
+<!-- ИНСТРУКЦИЯ -->
+<section id="pg-instr" class="hidden">
+  <div class="card instr">
+    <h3>Первый запуск</h3>
+    <li>Открой «➕ Новый месяц» → блок «Импорт» → загрузи <b>Финансовый_Дашборд_v25.xlsx</b>. Вся история с августа 2025 подтянется во все вкладки автоматически.</li>
+    <li>Данные сохраняются в приложении и остаются при следующем открытии — импорт нужен один раз.</li>
+    <h3>Каждый месяц</h3>
+    <li>Вкладка «➕ Новый месяц»: проверь месяц/год (угадываются из имени файла).</li>
+    <li>Загрузи файл <b>Расход_Доход_за_….xlsx</b> — приложение распознает точки (в т.ч. ЖГ, КС, АЦ, ШР, ХБК, Хром, Вокз/ЖД, Орал) и колонки по заголовкам.</li>
+    <li>Загрузи <b>остатки складов</b> (xlsx: Магазин | Закупная | Продажная). Если остатки в docx — открой в Word и пересохрани как xlsx.</li>
+    <li>Проверь таблицу, поправь при необходимости → <b>«Сохранить месяц»</b>. Дашборд и все вкладки обновятся сами.</li>
+    <h3>Что где смотреть</h3>
+    <li><b>Дашборд</b> — KPI и графики за выбранный месяц.</li>
+    <li><b>Данные</b> — мастер-таблица: выручка, аренда+интернет, товар/закуп, ЗП продавцов, прочее, итого расход, прибыль, чистая и валовая маржа, коэффициент оборачиваемости. Есть фильтры по точке и месяцу.</li>
+    <li><b>По месяцам</b> — динамика всей сети + строка ИТОГО.</li>
+    <li><b>Склад и продажи</b> — остатки по закупной цене по точкам и месяцам.</li>
+    <li><b>Оборачиваемость</b> — запас в месяцах по каждой точке; норма ~3 мес, Шернияза 3.5 (двухзальная). Перегруз и недогруз подсвечиваются.</li>
+    <li><b>Остатки складов</b> — подробно по точке: закуп, продажная, наценка, коэффициент.</li>
+    <li><b>История выручки</b> — график с 2019 года; старые периоды впиши один раз вручную.</li>
+    <li><b>Магазины</b> — полная карточка каждой точки: все показатели по месяцам, итого, среднее, структура расходов.</li>
+    <h3>Облачное хранение</h3>
+    <li>Данные лежат в облаке (Firebase) — открой сайт на любом устройстве и сразу увидишь всё.</li>
+    <li>Каждое сохранение месяца автоматически улетает в облако; статус виден в блоке «☁️ Облачное хранение».</li>
+    <li>Если интернета нет — приложение работает с локальной копией и предупредит об этом.</li>
+    <li>Пароля нет, поэтому не публикуй ссылку на сайт — данные увидит любой, у кого она есть.</li>
+    <h3>Важные правила</h3>
+    <li>Склад всегда считается по <b>закупной</b> цене (не продажной).</li>
+    <li>ЗП выше 20% выручки — красный флаг, подсвечивается везде.</li>
+    <li>Раз в месяц скачивай резервную копию (JSON) — на всякий случай.</li>
+  </div>
+</section>
+
+</main>
+<footer>Top Glass · данные сохраняются автоматически и доступны при следующем открытии</footer>
+
+<script>
+/* ===== константы ===== */
+const STORES=['Жилгородок','Кисилево','Акация','Шернияза','ХБК','Хромтау','Вокзал','Орал'];
+const COLORS={'Жилгородок':'#3f7fc4','Кисилево':'#1fae8f','Акация':'#9b59d0','Шернияза':'#d9b323','ХБК':'#b06fd0','Хромтау':'#2e86c1','Вокзал':'#e05a4e','Орал':'#2ecc71'};
+const NORMS=s=>s==='Шернияза'?3.5:3.0;
+const MONTHS_RU=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const M_SHORT=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+const FIELDS=[['rev','Выручка'],['goods','Товар/закуп'],['rent','Аренда+инт.'],['salary','ЗП продавцов'],['other','Прочее']];
+const KEY='tg-finance-v1';
+const PAGES=[['dash','Дашборд'],['data','Данные'],['monthly','По месяцам'],['svp','Склад и продажи'],['turn','Оборачиваемость'],['stocks','Остатки складов'],['hist','История выручки'],['stores','Магазины'],['up','➕ Новый месяц'],['instr','Инструкция']];
+
+let data={months:{},history:[]};
+const SEED_DATA={"months": {"2025-08": {"stores": {"Жилгородок": {"rev": 3926705, "goods": 1256890, "rent": 402000, "salary": 740825, "other": 1000}, "Кисилево": {"rev": 5252361, "goods": 1503238, "rent": 22500, "salary": 923190, "other": 62900}, "Акация": {"rev": 4573560, "goods": 1294302, "rent": 209000, "salary": 811088, "other": 0}, "Шернияза": {"rev": 5170105, "goods": 1416202, "rent": 310800, "salary": 1055313, "other": 404998}, "ХБК": {"rev": 1906540, "goods": 404515, "rent": 230512, "salary": 341908, "other": 6500}, "Вокзал": {"rev": 2135420, "goods": 764008, "rent": 365583, "salary": 511489, "other": 18100}}, "stocks": {}}, "2025-09": {"stores": {"Жилгородок": {"rev": 2872237, "goods": 1032823, "rent": 399469, "salary": 499920, "other": 44370}, "Кисилево": {"rev": 3951273, "goods": 1286201, "rent": 115000, "salary": 632718, "other": 38202}, "Акация": {"rev": 3668730, "goods": 1193177, "rent": 229251, "salary": 718694, "other": 7390}, "Шернияза": {"rev": 4602642, "goods": 1368897, "rent": 360262, "salary": 923944, "other": 32330}, "ХБК": {"rev": 1440010, "goods": 509514, "rent": 231233, "salary": 258655, "other": 750}, "Вокзал": {"rev": 2013523, "goods": 701748, "rent": 372814, "salary": 530175, "other": 28675}}, "stocks": {"Жилгородок": {"purchase": 3517079, "retail": 9731540}, "Кисилево": {"purchase": 3359232, "retail": 9456516}, "Акация": {"purchase": 3418313, "retail": 9558508}, "Шернияза": {"purchase": 3532340, "retail": 9641480}, "ХБК": {"purchase": 3249915, "retail": 9304675}, "Вокзал": {"purchase": 2841079, "retail": 8259274}}}, "2025-10": {"stores": {"Жилгородок": {"rev": 2928869, "goods": 941765, "rent": 394530, "salary": 311667, "other": 20790}, "Кисилево": {"rev": 3268536, "goods": 1146705, "rent": 115994, "salary": 607450, "other": 12870}, "Акация": {"rev": 3774038, "goods": 1181518, "rent": 221810, "salary": 745311, "other": 0}, "Шернияза": {"rev": 4658660, "goods": 1403060, "rent": 335800, "salary": 907285, "other": 2500}, "ХБК": {"rev": 1392242, "goods": 485858, "rent": 225281, "salary": 269678, "other": 11560}, "Вокзал": {"rev": 1836935, "goods": 1337046, "rent": 366670, "salary": 399285, "other": 7000}}, "stocks": {"Жилгородок": {"purchase": 3298331, "retail": 9082620}, "Кисилево": {"purchase": 2888481, "retail": 8270490}, "Акация": {"purchase": 3161564, "retail": 8876448}, "Шернияза": {"purchase": 3151787, "retail": 8590150}, "ХБК": {"purchase": 3080077, "retail": 8756675}, "Вокзал": {"purchase": 2717751, "retail": 7999188}}}, "2025-11": {"stores": {"Жилгородок": {"rev": 2707050, "goods": 902300, "rent": 399525, "salary": 475064, "other": 0}, "Кисилево": {"rev": 3640763, "goods": 1644709, "rent": 54071, "salary": 665470, "other": 30225}, "Акация": {"rev": 3343116, "goods": 1495974, "rent": 225640, "salary": 662805, "other": 0}, "Шернияза": {"rev": 4349678, "goods": 1698489, "rent": 375364, "salary": 831062, "other": 0}, "ХБК": {"rev": 1310930, "goods": 618745, "rent": 230804, "salary": 244840, "other": 55304}, "Вокзал": {"rev": 745390, "goods": 536894, "rent": 359500, "salary": 340793, "other": 796845}}, "stocks": {"Жилгородок": {"purchase": 3302530, "retail": 8978430}, "Кисилево": {"purchase": 2946825, "retail": 8381990}, "Акация": {"purchase": 3165347, "retail": 8896858}, "Шернияза": {"purchase": 3182064, "retail": 8661900}, "ХБК": {"purchase": 3102599, "retail": 8831525}, "Вокзал": {"purchase": 2761491, "retail": 8050454}}}, "2025-12": {"stores": {"Жилгородок": {"rev": 2768679, "goods": 1187661, "rent": 387068, "salary": 579637, "other": 5590}, "Кисилево": {"rev": 3782439, "goods": 1326269, "rent": 106868, "salary": 690787, "other": 33557}, "Акация": {"rev": 3246295, "goods": 1099227, "rent": 225640, "salary": 705666, "other": 0}, "Шернияза": {"rev": 4770066, "goods": 1656678, "rent": 364564, "salary": 1019081, "other": 2850}, "ХБК": {"rev": 1411337, "goods": 629494, "rent": 226010, "salary": 299462, "other": 8500}, "Хромтау": {"rev": 2777020, "goods": 1490112, "rent": 225900, "salary": 654967, "other": 461120}, "Вокзал": {"rev": 292690, "goods": 2293497, "rent": 346976, "salary": 156837, "other": 907135}}, "stocks": {"Жилгородок": {"purchase": 3243389, "retail": 8729510}, "Кисилево": {"purchase": 3290696, "retail": 9205430}, "Акация": {"purchase": 3594131, "retail": 9790848}, "Шернияза": {"purchase": 3363369, "retail": 8890310}, "ХБК": {"purchase": 3206601, "retail": 8974765}, "Хромтау": {"purchase": 3814803, "retail": 11061460}, "Вокзал": {"purchase": 2938676, "retail": 8395147}}}, "2026-01": {"stores": {"Жилгородок": {"rev": 2826911, "goods": 1082981, "rent": 401245, "salary": 627587, "other": 7875}, "Кисилево": {"rev": 3545044, "goods": 1529550, "rent": 106868, "salary": 708371, "other": 1060}, "Акация": {"rev": 3079568, "goods": 1240906, "rent": 225640, "salary": 688614, "other": 0}, "Шернияза": {"rev": 4582673, "goods": 1929218, "rent": 364564, "salary": 1018380, "other": 237507}, "ХБК": {"rev": 1685044, "goods": 530286, "rent": 233177, "salary": 335064, "other": 6800}, "Хромтау": {"rev": 2148730, "goods": 658980, "rent": 240458, "salary": 592976, "other": 105968}, "Вокзал": {"rev": 1359830, "goods": 681243, "rent": 364371, "salary": 406123, "other": 170060}}, "stocks": {"Жилгородок": {"purchase": 3136825, "retail": 7831480}, "Кисилево": {"purchase": 2970367, "retail": 7738800}, "Акация": {"purchase": 3488809, "retail": 8703117}, "Шернияза": {"purchase": 3202233, "retail": 8040990}, "ХБК": {"purchase": 3166043, "retail": 8167015}, "Хромтау": {"purchase": 4142252, "retail": 10911720}, "Вокзал": {"purchase": 2641380, "retail": 6484504}}}, "2026-02": {"stores": {"Жилгородок": {"rev": 2657159, "goods": 844516, "rent": 392008, "salary": 582083, "other": 7200}, "Кисилево": {"rev": 2660820, "goods": 1221418, "rent": 150085, "salary": 537314, "other": 13440}, "Акация": {"rev": 2793808, "goods": 957462, "rent": 225755, "salary": 670244, "other": 9050}, "Шернияза": {"rev": 4134307, "goods": 1815538, "rent": 584904, "salary": 798002, "other": 377197}, "ХБК": {"rev": 1442320, "goods": 435429, "rent": 240157, "salary": 272826, "other": 6800}, "Хромтау": {"rev": 2380090, "goods": 964404, "rent": 242560, "salary": 603952, "other": 116184}, "Вокзал": {"rev": 1299360, "goods": 459573, "rent": 352880, "salary": 395225, "other": 14430}, "Орал": {"rev": 722760, "goods": 3592044, "rent": 80000, "salary": 417969, "other": 2092433}}, "stocks": {"Жилгородок": {"purchase": 3080819, "retail": 7665662}, "Кисилево": {"purchase": 3033047, "retail": 7860250}, "Акация": {"purchase": 3393773, "retail": 8619167}, "Шернияза": {"purchase": 3339594, "retail": 8344080}, "ХБК": {"purchase": 2847245, "retail": 7454956}, "Хромтау": {"purchase": 4084669, "retail": 10633550}, "Вокзал": {"purchase": 2803209, "retail": 6854706}}}, "2026-03": {"stores": {"Жилгородок": {"rev": 2742230, "goods": 1010909, "rent": 401837, "salary": 632568, "other": 7530}, "Кисилево": {"rev": 2947015, "goods": 984247, "rent": 130428, "salary": 578901, "other": 58770}, "Акация": {"rev": 3100730, "goods": 1365783, "rent": 231425, "salary": 786449, "other": 11318}, "Шернияза": {"rev": 4745198, "goods": 1873432, "rent": 584213, "salary": 1220760, "other": 331270}, "ХБК": {"rev": 1487115, "goods": 604314, "rent": 241520, "salary": 305471, "other": 2990}, "Хромтау": {"rev": 1993810, "goods": 885215, "rent": 244560, "salary": 528758, "other": 63830}, "Вокзал": {"rev": 1302700, "goods": 489772, "rent": 472702, "salary": 388687, "other": 41030}, "Орал": {"rev": 1381770, "goods": 401662, "rent": 98153, "salary": 457151, "other": 234876}}, "stocks": {"Жилгородок": {"purchase": 2614477, "retail": 7425510}, "Кисилево": {"purchase": 2871853, "retail": 8072110}, "Акация": {"purchase": 2980611, "retail": 8223080}, "Шернияза": {"purchase": 3279044, "retail": 8868520}, "ХБК": {"purchase": 2401674, "retail": 7289674}, "Хромтау": {"purchase": 3735469, "retail": 10865000}, "Вокзал": {"purchase": 2383045, "retail": 6763690}, "Орал": {"purchase": 3321350, "retail": 8940770}}}, "2026-04": {"stores": {"Жилгородок": {"rev": 2707670, "goods": 975509, "rent": 366000, "salary": 641031, "other": 39407}, "Кисилево": {"rev": 2871710, "goods": 1003719, "rent": 9000, "salary": 562197, "other": 149159}, "Акация": {"rev": 3071130, "goods": 828008, "rent": 211000, "salary": 636965, "other": 47565}, "Шернияза": {"rev": 4536710, "goods": 1734041, "rent": 514862, "salary": 964535, "other": 114784}, "ХБК": {"rev": 1321040, "goods": 502745, "rent": 212500, "salary": 274172, "other": 65149}, "Хромтау": {"rev": 1921800, "goods": 530538, "rent": 218000, "salary": 526632, "other": 80497}, "Вокзал": {"rev": 1456150, "goods": 460447, "rent": 306000, "salary": 463532, "other": 76571}, "Орал": {"rev": 2073500, "goods": 632935, "rent": 74000, "salary": 604932, "other": 103504}}, "stocks": {"Жилгородок": {"purchase": 2584984, "retail": 7572450}, "Кисилево": {"purchase": 2663736, "retail": 7847330}, "Акация": {"purchase": 3220328, "retail": 9152950}, "Шернияза": {"purchase": 3310509, "retail": 9281510}, "ХБК": {"purchase": 2445874, "retail": 7824681}, "Хромтау": {"purchase": 3892728, "retail": 11746420}, "Вокзал": {"purchase": 2374723, "retail": 7131600}, "Орал": {"purchase": 3025044, "retail": 8737750}}}, "2026-05": {"stores": {"Жилгородок": {"rev": 3184950, "goods": 1341925, "rent": 359300, "salary": 705047, "other": 75760}, "Кисилево": {"rev": 3554480, "goods": 1276677, "rent": 9000, "salary": 705047, "other": 52154}, "Акация": {"rev": 3272150, "goods": 1356499, "rent": 209300, "salary": 728765, "other": 28540}, "Шернияза": {"rev": 5469590, "goods": 2345950, "rent": 514862, "salary": 1170833, "other": 162792}, "ХБК": {"rev": 1514970, "goods": 599817, "rent": 212500, "salary": 322521, "other": 26534}, "Хромтау": {"rev": 2067740, "goods": 673364, "rent": 218000, "salary": 571949, "other": 66720}, "Вокзал": {"rev": 1469630, "goods": 683306, "rent": 306000, "salary": 440972, "other": 30380}, "Орал": {"rev": 1940100, "goods": 639143, "rent": 74000, "salary": 550624, "other": 129608}}, "stocks": {"Жилгородок": {"purchase": 2480809, "retail": 7196070}, "Кисилево": {"purchase": 2525986, "retail": 7557580}, "Акация": {"purchase": 2877673, "retail": 8220470}, "Шернияза": {"purchase": 3320823, "retail": 9118010}, "ХБК": {"purchase": 2316411, "retail": 7104781}, "Хромтау": {"purchase": 3694187, "retail": 11207480}, "Вокзал": {"purchase": 2291051, "retail": 6860370}, "Орал": {"purchase": 2854371, "retail": 8224180}}}, "2026-06": {"stores": {"Жилгородок": {"rev": 3642500, "goods": 1101532, "rent": 355000, "salary": 813297, "other": 35692}, "Кисилево": {"rev": 3623250, "goods": 1228348, "rent": 9990, "salary": 686732, "other": 79950}, "Акация": {"rev": 4241900, "goods": 1229401, "rent": 205000, "salary": 966284, "other": 102896}, "Шернияза": {"rev": 7152090, "goods": 2607823, "rent": 514863, "salary": 1585540, "other": 275416}, "ХБК": {"rev": 1512390, "goods": 347043, "rent": 210000, "salary": 332509, "other": 15127}, "Хромтау": {"rev": 2297510, "goods": 601929, "rent": 205000, "salary": 603767, "other": 123563}, "Вокзал": {"rev": 1945810, "goods": 721225, "rent": 305000, "salary": 496473, "other": 94556}, "Орал": {"rev": 2393200, "goods": 680998, "rent": 94000, "salary": 614511, "other": 56220}}, "stocks": {"Жилгородок": {"purchase": 2654774, "retail": 7589570}, "Кисилево": {"purchase": 2553783, "retail": 7371080}, "Акация": {"purchase": 2999384, "retail": 8567060}, "Шернияза": {"purchase": 3812061, "retail": 10208430}, "ХБК": {"purchase": 2319753, "retail": 7162381}, "Хромтау": {"purchase": 3343971, "retail": 10416580}, "Вокзал": {"purchase": 2317824, "retail": 7156050}, "Орал": {"purchase": 2762231, "retail": 8165090}}}, "2026-07": {"stores": {}, "stocks": {"Жилгородок": {"purchase": 2548692, "retail": 7249510}, "Кисилево": {"purchase": 2452201, "retail": 7088470}, "Акация": {"purchase": 2880664, "retail": 8234040}, "Шернияза": {"purchase": 3894837, "retail": 10716760}, "ХБК": {"purchase": 2186237, "retail": 6832291}, "Хромтау": {"purchase": 2858898, "retail": 8610110}, "Вокзал": {"purchase": 2324355, "retail": 7154760}, "Орал": {"purchase": 2522490, "retail": 7889700}}}}, "history": [{"label": "Октябрь 2019", "rev": 518585}, {"label": "Ноябрь 2019", "rev": 898000}, {"label": "Декабрь 2019", "rev": 870000}, {"label": "Январь 2020", "rev": 631000}, {"label": "Февраль 2020", "rev": 920000}, {"label": "Март 2020", "rev": 2113490}, {"label": "Апрель 2020", "rev": 917000}, {"label": "Май 2020", "rev": 4508000}, {"label": "Июнь 2020", "rev": 2795000}, {"label": "Июль 2020", "rev": 4098000}, {"label": "Август 2020", "rev": 5842766}, {"label": "Сентябрь 2020", "rev": 3870310}, {"label": "Октябрь 2020", "rev": 3663823}, {"label": "Ноябрь 2020", "rev": 3635120}, {"label": "Декабрь 2020", "rev": 3993168}, {"label": "Январь 2021", "rev": 2982393}, {"label": "Февраль 2021", "rev": 2684385}, {"label": "Март 2021", "rev": 3231245}, {"label": "Апрель 2021", "rev": 3245989}, {"label": "Май 2021", "rev": 3674021}, {"label": "Июнь 2021", "rev": 4134435}, {"label": "Июль 2021", "rev": 5215000}, {"label": "Август 2021", "rev": 4970613}, {"label": "Сентябрь 2021", "rev": 5220965}, {"label": "Октябрь 2021", "rev": 6559857}, {"label": "Ноябрь 2021", "rev": 5802017}, {"label": "Декабрь 2021", "rev": 7297949}, {"label": "Январь 2022", "rev": 5087830}, {"label": "Февраль 2022", "rev": 5320530}, {"label": "Март 2022", "rev": 5937235}, {"label": "Апрель 2022", "rev": 6032352}, {"label": "Май 2022", "rev": 9116153}, {"label": "Июнь 2022", "rev": 11309975}, {"label": "Июль 2022", "rev": 12540000}, {"label": "Август 2022", "rev": 12490000}, {"label": "Сентябрь 2022", "rev": 11274000}, {"label": "Октябрь 2022", "rev": 11992000}, {"label": "Ноябрь 2022", "rev": 10276935}, {"label": "Декабрь 2022", "rev": 11198000}, {"label": "Январь 2023", "rev": 9475000}, {"label": "Февраль 2023", "rev": 8359000}, {"label": "Март 2023", "rev": 10236100}, {"label": "Апрель 2023", "rev": 12172998}, {"label": "Май 2023", "rev": 13209736}, {"label": "Июнь 2023", "rev": 15194722}, {"label": "Июль 2023", "rev": 17885603}, {"label": "Август 2023", "rev": 16691009}, {"label": "Сентябрь 2023", "rev": 13977580}, {"label": "Ноябрь 2023", "rev": 14275020}, {"label": "Декабрь 2023", "rev": 14459290}, {"label": "Январь 2024", "rev": 13380940}, {"label": "Февраль 2024", "rev": 12461655}, {"label": "Март 2024", "rev": 13251230}, {"label": "Апрель 2024", "rev": 13235850}, {"label": "Май 2024", "rev": 14557044}, {"label": "Июнь 2024", "rev": 15659030}, {"label": "Июль 2024", "rev": 18052585}, {"label": "Август 2024", "rev": 19902830}, {"label": "Сентябрь 2024", "rev": 16758020}, {"label": "Октябрь 2024", "rev": 16031730}, {"label": "Ноябрь 2024", "rev": 16719830}, {"label": "Декабрь 2024", "rev": 19171574}, {"label": "Январь 2025", "rev": 17290220}, {"label": "Февраль 2025", "rev": 14779400}, {"label": "Март 2025", "rev": 16435870}, {"label": "Апрель 2025", "rev": 15945300}, {"label": "Май 2025", "rev": 19095350}, {"label": "Июнь 2025", "rev": 22038772}, {"label": "Июль 2025", "rev": 23751323}], "historyRows": [{"year": 2019, "m": 10, "label": "Октябрь 2019", "stores": {"Жилгородок": 518585}, "total": 518585}, {"year": 2019, "m": 11, "label": "Ноябрь 2019", "stores": {"Жилгородок": 898000}, "total": 898000}, {"year": 2019, "m": 12, "label": "Декабрь 2019", "stores": {"Жилгородок": 870000}, "total": 870000}, {"year": 2020, "m": 1, "label": "Январь 2020", "stores": {"Жилгородок": 631000}, "total": 631000}, {"year": 2020, "m": 2, "label": "Февраль 2020", "stores": {"Жилгородок": 920000}, "total": 920000}, {"year": 2020, "m": 3, "label": "Март 2020", "stores": {"Кисилево": 761730, "Жилгородок": 1351760}, "total": 2113490}, {"year": 2020, "m": 4, "label": "Апрель 2020", "stores": {"Жилгородок": 917000}, "total": 917000}, {"year": 2020, "m": 5, "label": "Май 2020", "stores": {"Кисилево": 848000, "Жилгородок": 3660000}, "total": 4508000}, {"year": 2020, "m": 6, "label": "Июнь 2020", "stores": {"Кисилево": 1059000, "Жилгородок": 1736000}, "total": 2795000}, {"year": 2020, "m": 7, "label": "Июль 2020", "stores": {"Кисилево": 635000, "Жилгородок": 3463000}, "total": 4098000}, {"year": 2020, "m": 8, "label": "Август 2020", "stores": {"Кисилево": 1556730, "Жилгородок": 4286036}, "total": 5842766}, {"year": 2020, "m": 9, "label": "Сентябрь 2020", "stores": {"Кисилево": 1131710, "Жилгородок": 2738600}, "total": 3870310}, {"year": 2020, "m": 10, "label": "Октябрь 2020", "stores": {"Кисилево": 1144459, "Жилгородок": 2519364}, "total": 3663823}, {"year": 2020, "m": 11, "label": "Ноябрь 2020", "stores": {"Кисилево": 1111000, "Жилгородок": 2524120}, "total": 3635120}, {"year": 2020, "m": 12, "label": "Декабрь 2020", "stores": {"Кисилево": 1277188, "Жилгородок": 2715980}, "total": 3993168}, {"year": 2021, "m": 1, "label": "Январь 2021", "stores": {"Кисилево": 934131, "Жилгородок": 2048262}, "total": 2982393}, {"year": 2021, "m": 2, "label": "Февраль 2021", "stores": {"Кисилево": 789249, "Жилгородок": 1895136}, "total": 2684385}, {"year": 2021, "m": 3, "label": "Март 2021", "stores": {"Кисилево": 986081, "Жилгородок": 2245164}, "total": 3231245}, {"year": 2021, "m": 4, "label": "Апрель 2021", "stores": {"Кисилево": 1008905, "Жилгородок": 2237084}, "total": 3245989}, {"year": 2021, "m": 5, "label": "Май 2021", "stores": {"Кисилево": 955426, "Жилгородок": 2718595}, "total": 3674021}, {"year": 2021, "m": 6, "label": "Июнь 2021", "stores": {"Кисилево": 1233335, "Жилгородок": 2901100}, "total": 4134435}, {"year": 2021, "m": 7, "label": "Июль 2021", "stores": {"Кисилево": 1150720, "Жилгородок": 4064280}, "total": 5215000}, {"year": 2021, "m": 8, "label": "Август 2021", "stores": {"Кисилево": 1209780, "Жилгородок": 3760833}, "total": 4970613}, {"year": 2021, "m": 9, "label": "Сентябрь 2021", "stores": {"Кисилево": 1418720, "Жилгородок": 2699245, "Акация": 1103000}, "total": 5220965}, {"year": 2021, "m": 10, "label": "Октябрь 2021", "stores": {"Кисилево": 1773242, "Жилгородок": 2732770, "Акация": 2053845}, "total": 6559857}, {"year": 2021, "m": 11, "label": "Ноябрь 2021", "stores": {"Кисилево": 1729145, "Жилгородок": 2634100, "Акация": 1438772}, "total": 5802017}, {"year": 2021, "m": 12, "label": "Декабрь 2021", "stores": {"Кисилево": 2279330, "Жилгородок": 3149100, "Акация": 1869519}, "total": 7297949}, {"year": 2022, "m": 1, "label": "Январь 2022", "stores": {"Кисилево": 1509080, "Жилгородок": 2251510, "Акация": 1327240}, "total": 5087830}, {"year": 2022, "m": 2, "label": "Февраль 2022", "stores": {"Кисилево": 1790510, "Жилгородок": 2192650, "Акация": 1337370}, "total": 5320530}, {"year": 2022, "m": 3, "label": "Март 2022", "stores": {"Кисилево": 2066710, "Жилгородок": 2339365, "Акация": 1531160}, "total": 5937235}, {"year": 2022, "m": 4, "label": "Апрель 2022", "stores": {"Кисилево": 1939520, "Жилгородок": 2577145, "Акация": 1515687}, "total": 6032352}, {"year": 2022, "m": 5, "label": "Май 2022", "stores": {"Кисилево": 2372714, "Жилгородок": 3024699, "Акация": 1698740, "Шернияза": 2020000}, "total": 9116153}, {"year": 2022, "m": 6, "label": "Июнь 2022", "stores": {"Кисилево": 2609564, "Жилгородок": 3166542, "Акация": 2350772, "Шернияза": 3183097}, "total": 11309975}, {"year": 2022, "m": 7, "label": "Июль 2022", "stores": {"Кисилево": 2840000, "Жилгородок": 3300000, "Акация": 2600000, "Шернияза": 3800000}, "total": 12540000}, {"year": 2022, "m": 8, "label": "Август 2022", "stores": {"Кисилево": 2700000, "Жилгородок": 3570000, "Акация": 2500000, "Шернияза": 3720000}, "total": 12490000}, {"year": 2022, "m": 9, "label": "Сентябрь 2022", "stores": {"Кисилево": 2509000, "Жилгородок": 3179000, "Акация": 2217000, "Шернияза": 3369000}, "total": 11274000}, {"year": 2022, "m": 10, "label": "Октябрь 2022", "stores": {"Кисилево": 2925000, "Жилгородок": 3255000, "Акация": 2229000, "Шернияза": 3583000}, "total": 11992000}, {"year": 2022, "m": 11, "label": "Ноябрь 2022", "stores": {"Кисилево": 2719935, "Жилгородок": 2854000, "Акация": 1789000, "Шернияза": 2914000}, "total": 10276935}, {"year": 2022, "m": 12, "label": "Декабрь 2022", "stores": {"Кисилево": 2798000, "Жилгородок": 2881000, "Акация": 2187000, "Шернияза": 3332000}, "total": 11198000}, {"year": 2023, "m": 1, "label": "Январь 2023", "stores": {"Кисилево": 2458000, "Жилгородок": 2575000, "Акация": 1847000, "Шернияза": 2595000}, "total": 9475000}, {"year": 2023, "m": 2, "label": "Февраль 2023", "stores": {"Кисилево": 2100000, "Жилгородок": 2021000, "Акация": 1561000, "Шернияза": 2677000}, "total": 8359000}, {"year": 2023, "m": 3, "label": "Март 2023", "stores": {"Кисилево": 2756560, "Жилгородок": 2658820, "Акация": 1801130, "Шернияза": 2905980, "ХБК": 113610}, "total": 10236100}, {"year": 2023, "m": 4, "label": "Апрель 2023", "stores": {"Кисилево": 2867190, "Жилгородок": 2605688, "Акация": 1637100, "Шернияза": 2948590, "11 мкр": 726040, "ХБК": 1388390}, "total": 12172998}, {"year": 2023, "m": 5, "label": "Май 2023", "stores": {"Кисилево": 2909610, "Жилгородок": 2867110, "Акация": 1717760, "Шернияза": 3038660, "11 мкр": 1475430, "ХБК": 1201166}, "total": 13209736}, {"year": 2023, "m": 6, "label": "Июнь 2023", "stores": {"Кисилево": 3487130, "Жилгородок": 3404220, "Акация": 1690080, "Шернияза": 3481405, "11 мкр": 1811875, "ХБК": 1320012}, "total": 15194722}, {"year": 2023, "m": 7, "label": "Июль 2023", "stores": {"Кисилево": 3841230, "Жилгородок": 4009370, "Акация": 2395610, "Шернияза": 3884770, "11 мкр": 2207890, "ХБК": 1546733}, "total": 17885603}, {"year": 2023, "m": 8, "label": "Август 2023", "stores": {"Кисилево": 3673389, "Жилгородок": 3870910, "Акация": 2243450, "Шернияза": 3577210, "11 мкр": 1991960, "ХБК": 1334090}, "total": 16691009}, {"year": 2023, "m": 9, "label": "Сентябрь 2023", "stores": {"Кисилево": 3456490, "Жилгородок": 3032380, "Акация": 1496990, "Шернияза": 3144010, "11 мкр": 1482000, "ХБК": 1365710}, "total": 13977580}, {"year": 2023, "m": 11, "label": "Ноябрь 2023", "stores": {"Кисилево": 3296480, "Жилгородок": 3172320, "Акация": 2285810, "Шернияза": 3006350, "11 мкр": 1463170, "ХБК": 1050890}, "total": 14275020}, {"year": 2023, "m": 12, "label": "Декабрь 2023", "stores": {"Кисилево": 3598900, "Жилгородок": 2958200, "Акация": 2020250, "Шернияза": 3101880, "11 мкр": 1395790, "ХБК": 1384270}, "total": 14459290}, {"year": 2024, "m": 1, "label": "Январь 2024", "stores": {"Кисилево": 2819740, "Жилгородок": 2665800, "Акация": 2519080, "Шернияза": 2898030, "11 мкр": 1186640, "ХБК": 1291650}, "total": 13380940}, {"year": 2024, "m": 2, "label": "Февраль 2024", "stores": {"Кисилево": 2676560, "Жилгородок": 2366185, "Акация": 2104730, "Шернияза": 2936400, "11 мкр": 1223200, "ХБК": 1154580}, "total": 12461655}, {"year": 2024, "m": 3, "label": "Март 2024", "stores": {"Кисилево": 2941120, "Жилгородок": 2407650, "Акация": 2077380, "Шернияза": 3249970, "11 мкр": 1359600, "ХБК": 1215510}, "total": 13251230}, {"year": 2024, "m": 4, "label": "Апрель 2024", "stores": {"Кисилево": 3102630, "Жилгородок": 2357760, "Акация": 2356290, "Шернияза": 2935230, "11 мкр": 1244080, "ХБК": 1239860}, "total": 13235850}, {"year": 2024, "m": 5, "label": "Май 2024", "stores": {"Кисилево": 3609100, "Жилгородок": 2565560, "Акация": 2298940, "Шернияза": 3374510, "11 мкр": 1350134, "ХБК": 1358800}, "total": 14557044}, {"year": 2024, "m": 6, "label": "Июнь 2024", "stores": {"Кисилево": 3787070, "Жилгородок": 3122880, "Акация": 2201590, "Шернияза": 3288460, "11 мкр": 1881750, "ХБК": 1377280}, "total": 15659030}, {"year": 2024, "m": 7, "label": "Июль 2024", "stores": {"Кисилево": 3921440, "Жилгородок": 3397610, "Акация": 2933330, "Шернияза": 3916430, "11 мкр": 2357460, "ХБК": 1526315}, "total": 18052585}, {"year": 2024, "m": 8, "label": "Август 2024", "stores": {"Кисилево": 4099030, "Жилгородок": 3732660, "Акация": 3442350, "Шернияза": 4319580, "11 мкр": 2556940, "ХБК": 1752270}, "total": 19902830}, {"year": 2024, "m": 9, "label": "Сентябрь 2024", "stores": {"Кисилево": 4010860, "Жилгородок": 3233360, "Акация": 2576850, "Шернияза": 3320180, "11 мкр": 2097900, "ХБК": 1518870}, "total": 16758020}, {"year": 2024, "m": 10, "label": "Октябрь 2024", "stores": {"Кисилево": 3886980, "Жилгородок": 3249240, "Акация": 2272810, "Шернияза": 3395950, "11 мкр": 1865220, "ХБК": 1361530}, "total": 16031730}, {"year": 2024, "m": 11, "label": "Ноябрь 2024", "stores": {"Кисилево": 3378950, "Жилгородок": 3190930, "Акация": 2236810, "Шернияза": 4657110, "11 мкр": 1934700, "ХБК": 1321330}, "total": 16719830}, {"year": 2024, "m": 12, "label": "Декабрь 2024", "stores": {"Кисилево": 4247510, "Жилгородок": 3068540, "Акация": 2610470, "Шернияза": 5389020, "11 мкр": 2492904, "ХБК": 1363130}, "total": 19171574}, {"year": 2025, "m": 1, "label": "Январь 2025", "stores": {"Кисилево": 3295950, "Жилгородок": 2993710, "Акация": 2994980, "Шернияза": 4392030, "11 мкр": 2164260, "ХБК": 1449290}, "total": 17290220}, {"year": 2025, "m": 2, "label": "Февраль 2025", "stores": {"Кисилево": 2782140, "Жилгородок": 2743160, "Акация": 2512690, "Шернияза": 3588320, "11 мкр": 1864260, "ХБК": 1288830}, "total": 14779400}, {"year": 2025, "m": 3, "label": "Март 2025", "stores": {"Кисилево": 2957640, "Жилгородок": 2854510, "Акация": 2867130, "Шернияза": 4042050, "11 мкр": 2379660, "ХБК": 1334880}, "total": 16435870}, {"year": 2025, "m": 4, "label": "Апрель 2025", "stores": {"Кисилево": 3413280, "Жилгородок": 2826140, "Акация": 2532230, "Шернияза": 3294420, "11 мкр": 1766030, "ХБК": 1256690, "Вокзал": 856510}, "total": 15945300}, {"year": 2025, "m": 5, "label": "Май 2025", "stores": {"Кисилево": 4029480, "Жилгородок": 2961840, "Акация": 2779880, "Шернияза": 4281350, "11 мкр": 2023800, "ХБК": 1547280, "Вокзал": 1471720}, "total": 19095350}, {"year": 2025, "m": 6, "label": "Июнь 2025", "stores": {"Кисилево": 4754200, "Жилгородок": 3545110, "Акация": 3535290, "Шернияза": 4658512, "11 мкр": 2192870, "ХБК": 1394560, "Вокзал": 1958230}, "total": 22038772}, {"year": 2025, "m": 7, "label": "Июль 2025", "stores": {"Кисилево": 4948338, "Жилгородок": 3760015, "Акация": 3989050, "Шернияза": 4648200, "11 мкр": 2480140, "ХБК": 1612950, "Вокзал": 2312630}, "total": 23751323}], "historyYears": [{"year": 2019, "total": 15671470}, {"year": 2020, "total": 53700282}, {"year": 2021, "total": 74719310}, {"year": 2022, "total": 140755275}, {"year": 2023, "total": 175900305}, {"year": 2024, "total": 201207028}, {"year": 2025, "total": 233679110}, {"year": 2026, "total": 99452312}]};
+data=JSON.parse(JSON.stringify(SEED_DATA));
+let charts={}, pending=null, curPage='dash';
+
+/* ===== storage: Firebase-облако + локальный кэш ===== */
+const inClaude=typeof window.storage!=='undefined'&&window.storage&&typeof window.storage.get==='function';
+let fdb=null,fdoc=null,lastPushed='';
+function clStatus(txt,ok){const el=document.getElementById('cl-status');if(el){el.textContent=txt;el.style.color=ok===true?'var(--good)':ok===false?'var(--bad)':'var(--dim)';}}
+function applyRemote(json){
+  if(!json||json===lastPushed)return;
+  try{const d=JSON.parse(json);d.months=d.months||{};d.history=d.history||[];data=d;lastPushed=json;persistLocal();refreshAll();}catch(e){}
+}
+function initCloud(){
+  if(!FIREBASE_CONFIG){clStatus('Облако ещё не настроено — данные хранятся только на этом устройстве.');return;}
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fdb=firebase.firestore();fdoc=fdb.collection('topglass').doc('data');
+  firebase.auth().onAuthStateChanged(u=>{
+    if(u){
+      document.getElementById('gate').classList.add('hidden');
+      clStatus('☁️ Облако подключено. Синхронизация автоматическая.',true);
+      fdoc.onSnapshot(s=>{if(s.exists)applyRemote(s.data().json);},
+        e=>clStatus('Облако недоступно: '+e.message+' — работаю с локальной копией.',false));
+    }else{
+      firebase.auth().signInAnonymously().catch(e=>clStatus('Не удалось подключиться к облаку: '+e.message,false));
+    }
+  });
+}
+async function gateLogin(){
+  const pw=document.getElementById('gate-pw').value;
+  const err=document.getElementById('gate-err');err.textContent='';
+  if(!pw)return;
+  try{await firebase.auth().signInWithEmailAndPassword(CLOUD_EMAIL,pw);document.getElementById('gate-pw').value='';}
+  catch(e){err.textContent=/wrong-password|invalid-credential|invalid-login/.test(e.code||'')?'Неверный пароль.':'Ошибка: '+e.message;}
+}
+async function persistLocal(){
+  try{
+    if(inClaude)await window.storage.set(KEY,JSON.stringify(data));
+    else{}
+  }catch(e){}
+}
+async function loadData(){
+  try{
+    if(inClaude){const r=await window.storage.get(KEY);if(r&&r.value)data=JSON.parse(r.value);}
+    else{}
+  }catch(e){}
+  data.months=data.months||{};data.history=data.history||[];
+  refreshAll();
+  initCloud();
+}
+async function persist(){
+  await persistLocal();
+  if(fdoc&&firebase.auth().currentUser){
+    try{
+      const json=JSON.stringify(data);lastPushed=json;
+      await fdoc.set({json,updated:new Date().toISOString()});
+      clStatus('☁️ Сохранено в облако · '+new Date().toLocaleTimeString('ru-RU'),true);
+    }catch(e){clStatus('Не удалось отправить в облако: '+e.message+'. Данные сохранены локально.',false);}
+  }
+}
+
+/* ===== утилиты ===== */
+const fmt=n=>n==null||isNaN(n)?'—':Math.round(n).toLocaleString('ru-RU');
+const fmtM=n=>n==null||isNaN(n)?'—':(n/1e6).toLocaleString('ru-RU',{maximumFractionDigits:2})+' млн ₸';
+const pct=n=>n==null||isNaN(n)?'—':(n*100).toFixed(1)+'%';
+const mKeys=()=>Object.keys(data.months).sort();
+const mLabel=k=>{const[y,m]=k.split('-');return MONTHS_RU[+m-1]+' '+y;};
+const mShort=k=>{const[y,m]=k.split('-');return M_SHORT[+m-1]+' '+y.slice(2);};
+const num=v=>{if(v==null)return 0;if(typeof v==='number')return v;
+  const s=String(v).replace(/[\s\u00a0₸]/g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;};
+function calc(d,stock){
+  const exp=(d.goods||0)+(d.rent||0)+(d.salary||0)+(d.other||0);
+  const profit=(d.rev||0)-exp;
+  return {exp,profit,
+    netM:d.rev?profit/d.rev:null,
+    grossM:d.rev?((d.rev||0)-(d.goods||0))/d.rev:null,
+    zp:d.rev?(d.salary||0)/d.rev:null,
+    coef:(stock&&d.goods)?stock/d.goods:null};
+}
+function netTotals(m){
+  const t={rev:0,goods:0,rent:0,salary:0,other:0,stock:0,retail:0};
+  for(const s of STORES){const d=m.stores?.[s];if(d){t.rev+=d.rev||0;t.goods+=d.goods||0;t.rent+=d.rent||0;t.salary+=d.salary||0;t.other+=d.other||0;}
+    const sk=m.stocks?.[s];if(sk){t.stock+=sk.purchase||0;t.retail+=sk.retail||0;}}
+  t.exp=t.goods+t.rent+t.salary+t.other;t.profit=t.rev-t.exp;
+  return t;
+}
+function showMsg(id,txt,cls){const el=document.getElementById(id);el.textContent=txt;el.className='msg '+cls;setTimeout(()=>{el.className='msg'},8000);}
+function normStore(s){
+  if(!s)return null;s=String(s).trim().toLowerCase();
+  const map={'жилгородок':'Жилгородок','жг':'Жилгородок','кисилево':'Кисилево','киселево':'Кисилево','кс':'Кисилево',
+    'акация':'Акация','ац':'Акация','шернияза':'Шернияза','шр':'Шернияза','хбк':'ХБК','хромтау':'Хромтау','хром':'Хромтау',
+    'вокзал':'Вокзал','вокз':'Вокзал','жд':'Вокзал','орал':'Орал'};
+  if(map[s])return map[s];
+  for(const k in map)if(k.length>2&&s.includes(k))return map[k];
+  return map[s]||null;
+}
+
+/* ===== навигация ===== */
+function buildNav(){
+  document.getElementById('nav').innerHTML=PAGES.map(([id,l])=>`<button id="nav-${id}" onclick="go('${id}')">${l}</button>`).join('');
+  document.getElementById('nav-dash').classList.add('on');
+}
+function go(p){
+  curPage=p;
+  for(const[id]of PAGES){
+    document.getElementById('pg-'+id).classList.toggle('hidden',id!==p);
+    document.getElementById('nav-'+id).classList.toggle('on',id===p);
+  }
+  render(p);
+}
+function render(p){
+  ({dash:renderDash,data:renderData,monthly:renderMonthly,svp:renderSvp,turn:renderTurn,
+    stocks:renderStocks,hist:renderHist,stores:renderStore,up:renderMonthsList,instr:()=>{}})[p]();
+}
+function refreshAll(){
+  const keys=mKeys();
+  fillSel('dash-month',keys.map(k=>[k,mLabel(k)]),keys[keys.length-1]);
+  fillSel('data-store',[['','Все точки'],...STORES.map(s=>[s,s])]);
+  fillSel('data-month',[['','Все месяцы'],...keys.map(k=>[k,mLabel(k)])]);
+  fillSel('store-sel',STORES.map(s=>[s,s]));
+  document.getElementById('dash-empty').classList.toggle('hidden',keys.length>0);
+  document.getElementById('dash-body').classList.toggle('hidden',keys.length===0);
+  render(curPage);
+}
+function fillSel(id,opts,val){
+  const el=document.getElementById(id);const old=el.value;
+  el.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  if(val!==undefined&&val!=null)el.value=val;
+  else if([...el.options].some(o=>o.value===old))el.value=old;
+}
+
+/* ===== графики ===== */
+function mkChart(id,type,cfg,opts={}){
+  if(charts[id])charts[id].destroy();
+  const base={grid:{color:'rgba(30,50,90,.08)'},ticks:{color:'#6b7896',font:{family:'Manrope',size:11}}};
+  const yScale={...base,ticks:{...base.ticks,callback:v=>typeof v==='number'?(Math.abs(v)>=1e6?(v/1e6)+'М':v.toLocaleString('ru-RU')):v}};
+  const options={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:opts.legendRight?'right':'top',labels:{color:'#1a2438',font:{family:'Manrope',size:11},boxWidth:12}}}};
+  if(type!=='pie'&&type!=='doughnut')options.scales={x:{...base,stacked:!!opts.stacked},y:{...yScale,stacked:!!opts.stacked,max:opts.max}};
+  charts[id]=new Chart(document.getElementById(id),{type,data:cfg,options});
+}
+
+/* ===== ДАШБОРД ===== */
+function renderDash(){
+  const keys=mKeys();if(!keys.length)return;
+  const cur=document.getElementById('dash-month').value||keys[keys.length-1];
+  const idx=keys.indexOf(cur),m=data.months[cur],t=netTotals(m);
+  const prev=idx>0?netTotals(data.months[keys[idx-1]]):null;
+  document.getElementById('k-rev').textContent=fmtM(t.rev);
+  const rd=document.getElementById('k-rev-s');
+  if(prev&&prev.rev){const d=(t.rev-prev.rev)/prev.rev;rd.textContent=(d>=0?'▲ +':'▼ ')+(d*100).toFixed(1)+'% к пред. мес';rd.className='kpi-s '+(d>=0?'good':'bad');}else rd.textContent='';
+  document.getElementById('k-prof').textContent=fmtM(t.profit);
+  document.getElementById('k-prof-s').textContent=prev?'пред. мес: '+fmtM(prev.profit):'';
+  const marg=t.rev?t.profit/t.rev:null;
+  document.getElementById('k-marg').textContent=pct(marg);
+  const me=document.getElementById('k-marg-s');
+  me.textContent=marg==null?'':(marg<0?'убыточный месяц':marg<.15?'ниже среднего':'здоровый уровень');
+  me.className='kpi-s '+(marg==null?'':marg<0?'bad':marg<.15?'warn':'good');
+  const zp=t.rev?t.salary/t.rev:null;
+  document.getElementById('k-zp').textContent=pct(zp);
+  const ze=document.getElementById('k-zp-s');
+  ze.textContent=zp==null?'':(zp>=.2?'выше нормы 20% — следить':'в норме (≤20%)');
+  ze.className='kpi-s '+(zp==null?'':zp>=.2?'warn':'good');
+  document.getElementById('k-stock').textContent=t.stock?fmtM(t.stock):'—';
+  document.getElementById('k-stock-s').textContent=t.stock?'остатки на конец месяца':'остатки не загружены';
+
+  const labels=keys.map(mShort),T=keys.map(k=>netTotals(data.months[k]));
+  mkChart('ch-rev','line',{labels,datasets:[
+    {label:'Выручка',data:T.map(t=>t.rev),borderColor:'#2b8ac6',backgroundColor:'rgba(43,138,198,.12)',fill:true,tension:0},
+    {label:'Прибыль',data:T.map(t=>t.profit),borderColor:'#1f9d57',tension:0}]});
+  const sN=STORES.filter(s=>m.stores?.[s]);
+  mkChart('ch-dstores','bar',{labels:sN,datasets:[
+    {label:'Выручка',data:sN.map(s=>m.stores[s].rev||0),backgroundColor:sN.map(s=>COLORS[s])},
+    {label:'Прибыль',data:sN.map(s=>calc(m.stores[s]).profit),backgroundColor:'rgba(26,36,56,.55)'}]});
+  mkChart('ch-exp','line',{labels,datasets:[
+    {label:'ЗП',data:T.map(t=>t.salary),borderColor:'#5b8ef0',tension:0},
+    {label:'Аренда',data:T.map(t=>t.rent),borderColor:'#e05a4e',tension:0},
+    {label:'Прочее',data:T.map(t=>t.other),borderColor:'#7fc95c',tension:0}]});
+  mkChart('ch-dstock','bar',{labels,datasets:[
+    {label:'Склад (закуп)',data:T.map(t=>t.stock||null),backgroundColor:'rgba(109,94,240,.55)'},
+    {label:'Продажи',data:T.map(t=>t.rev),backgroundColor:'rgba(43,138,198,.6)'}]});
+  mkChart('ch-pie','pie',{labels:['Товар','ЗП','Аренда','Прочее','Прибыль'],datasets:[{
+    data:[t.goods,t.salary,t.rent,t.other,Math.max(t.profit,0)],
+    backgroundColor:['#3f7fc4','#e05a4e','#d9b323','#9b59d0','#2ec4a0'],borderColor:'#ffffff',borderWidth:2}]},{legendRight:true});
+
+  let h='<tr><th>Точка</th><th>Выручка</th><th>Товар/закуп</th><th>Аренда+инт.</th><th>ЗП продавцов</th><th>Прочее</th><th>Прибыль</th><th>Чист. маржа</th><th>Склад (закуп)</th><th>Запас, мес</th></tr>';
+  for(const s of sN){
+    const d=m.stores[s],sk=m.stocks?.[s],c=calc(d,sk?.purchase);
+    const zpCell=c.zp>=.2?`<span class="tag warn">${fmt(d.salary)}</span>`:fmt(d.salary);
+    h+=`<tr><td><span class="dot" style="background:${COLORS[s]}"></span>${s}</td><td>${fmt(d.rev)}</td><td>${fmt(d.goods)}</td><td>${fmt(d.rent)}</td><td>${zpCell}</td><td>${fmt(d.other)}</td>
+    <td class="${c.profit<0?'neg':'pos'}">${fmt(c.profit)}</td><td>${pct(c.netM)}</td>
+    <td>${sk?fmt(sk.purchase):'—'}</td><td>${c.coef!=null?c.coef.toFixed(1):'—'}</td></tr>`;
+  }
+  const tt=netTotals(m);
+  const zpTot=tt.rev&&tt.salary/tt.rev>=.2?`<span class="tag warn">${fmt(tt.salary)}</span>`:fmt(tt.salary);
+  h+=`<tr class="total"><td>ИТОГО</td><td>${fmt(tt.rev)}</td><td>${fmt(tt.goods)}</td><td>${fmt(tt.rent)}</td><td>${zpTot}</td><td>${fmt(tt.other)}</td><td class="${tt.profit<0?'neg':'pos'}">${fmt(tt.profit)}</td><td>${pct(tt.rev?tt.profit/tt.rev:null)}</td><td>${tt.stock?fmt(tt.stock):'—'}</td><td>${(tt.stock&&tt.goods)?(tt.stock/tt.goods).toFixed(1):'—'}</td></tr>`;
+  document.getElementById('t-dstores').innerHTML=h;
+}
+
+/* ===== ДАННЫЕ ===== */
+function renderData(){
+  const fs=document.getElementById('data-store').value,fm=document.getElementById('data-month').value;
+  let h='<tr><th>Месяц</th><th>Магазин</th><th>Выручка</th><th>Товар/закуп</th><th>Аренда+инт.</th><th>ЗП продавцов</th><th>Прочее</th><th>Итого расход</th><th>Прибыль</th><th>Чист. маржа</th><th>% ЗП</th><th>Коэф. оборач.</th></tr>';
+  const tot={rev:0,rent:0,goods:0,salary:0,other:0,exp:0,profit:0};let rows=0;
+  for(const k of mKeys()){
+    if(fm&&k!==fm)continue;
+    const m=data.months[k];
+    for(const s of STORES){
+      if(fs&&s!==fs)continue;
+      const d=m.stores?.[s];if(!d)continue;
+      const c=calc(d,m.stocks?.[s]?.purchase);rows++;
+      for(const f of['rev','rent','goods','salary','other'])tot[f]+=d[f]||0;
+      tot.exp+=c.exp;tot.profit+=c.profit;
+      h+=`<tr><td>${mLabel(k)}</td><td><span class="dot" style="background:${COLORS[s]}"></span>${s}</td>
+      <td>${fmt(d.rev)}</td><td>${fmt(d.goods)}</td><td>${fmt(d.rent)}</td>
+      <td>${c.zp>=.2?`<span class="tag warn">${fmt(d.salary)}</span>`:fmt(d.salary)}</td>
+      <td>${fmt(d.other)}</td><td>${fmt(c.exp)}</td>
+      <td class="${c.profit<0?'neg':'pos'}">${fmt(c.profit)}</td>
+      <td>${pct(c.netM)}</td><td><span class="tag ${c.zp>=.2?'warn':'good'}">${pct(c.zp)}</span></td><td>${c.coef!=null?c.coef.toFixed(2):'—'}</td></tr>`;
+    }
+  }
+  const tzp=tot.rev?tot.salary/tot.rev:null;
+  if(rows>1)h+=`<tr class="total"><td>ИТОГО</td><td>${rows} строк</td><td>${fmt(tot.rev)}</td><td>${fmt(tot.goods)}</td><td>${fmt(tot.rent)}</td><td>${fmt(tot.salary)}</td><td>${fmt(tot.other)}</td><td>${fmt(tot.exp)}</td><td class="${tot.profit<0?'neg':'pos'}">${fmt(tot.profit)}</td><td>${pct(tot.rev?tot.profit/tot.rev:null)}</td><td>${tzp==null?'—':`<span class="tag ${tzp>=.2?'warn':'good'}">${pct(tzp)}</span>`}</td><td></td></tr>`;
+  document.getElementById('t-data').innerHTML=rows?h:'<tr><td class="note">Нет данных — импортируй историю или добавь месяц.</td></tr>';
+}
+
+/* ===== ПО МЕСЯЦАМ ===== */
+function renderMonthly(){
+  const keys=mKeys();
+  let h='<tr><th>Месяц</th><th>Выручка</th><th>Товар</th><th>Аренда</th><th>ЗП</th><th>Прочее</th><th>Итого расход</th><th>Прибыль</th><th>Чист. маржа</th><th>% ЗП от выр.</th></tr>';
+  const g={rev:0,rent:0,goods:0,salary:0,other:0,exp:0,profit:0};
+  for(const k of keys){
+    const t=netTotals(data.months[k]);
+    for(const f of['rev','rent','goods','salary','other','exp','profit'])g[f]+=t[f];
+    const zp=t.rev?t.salary/t.rev:null;
+    const zpCell=zp==null?'—':`<span class="tag ${zp>=.2?'warn':'good'}">${pct(zp)}</span>`;
+    h+=`<tr><td>${mLabel(k)}</td><td>${fmt(t.rev)}</td><td>${fmt(t.goods)}</td><td>${fmt(t.rent)}</td><td>${fmt(t.salary)}</td><td>${fmt(t.other)}</td><td>${fmt(t.exp)}</td><td class="${t.profit<0?'neg':'pos'}">${fmt(t.profit)}</td><td>${pct(t.rev?t.profit/t.rev:null)}</td><td>${zpCell}</td></tr>`;
+  }
+  const gzp=g.rev?g.salary/g.rev:null;
+  h+=`<tr class="total"><td>ИТОГО</td><td>${fmt(g.rev)}</td><td>${fmt(g.goods)}</td><td>${fmt(g.rent)}</td><td>${fmt(g.salary)}</td><td>${fmt(g.other)}</td><td>${fmt(g.exp)}</td><td class="${g.profit<0?'neg':'pos'}">${fmt(g.profit)}</td><td>${pct(g.rev?g.profit/g.rev:null)}</td><td>${gzp==null?'—':`<span class="tag ${gzp>=.2?'warn':'good'}">${pct(gzp)}</span>`}</td></tr>`;
+  document.getElementById('t-monthly').innerHTML=keys.length?h:'<tr><td class="note">Нет данных.</td></tr>';
+  const T=keys.map(k=>netTotals(data.months[k]));
+  mkChart('ch-monthly','line',{labels:keys.map(mShort),datasets:[
+    {label:'Выручка',data:T.map(t=>t.rev),borderColor:'#2b8ac6',tension:0},
+    {label:'Итого расход',data:T.map(t=>t.exp),borderColor:'#d9a520',tension:0},
+    {label:'Прибыль',data:T.map(t=>t.profit),borderColor:'#1f9d57',tension:0}]});
+}
+
+/* ===== СКЛАД И ПРОДАЖИ ===== */
+function renderSvp(){
+  const keys=mKeys();
+  const T=keys.map(k=>netTotals(data.months[k]));
+  mkChart('ch-svp','bar',{labels:keys.map(mShort),datasets:[
+    {label:'Склад (продажная)',data:T.map(t=>t.retail||null),backgroundColor:'rgba(109,94,240,.55)'},
+    {label:'Продажи',data:T.map(t=>t.rev),backgroundColor:'rgba(43,138,198,.6)'}]});
+  let h='<tr><th rowspan="2" style="vertical-align:bottom">Магазин</th>'+
+    keys.map(k=>`<th colspan="3" style="text-align:center;border-left:1px solid var(--panel-br)">${mShort(k)}</th>`).join('')+'</tr>';
+  h+='<tr>'+keys.map(()=>'<th style="border-left:1px solid var(--panel-br)">Склад</th><th>Продажи</th><th>Коэф.</th>').join('')+'</tr>';
+  for(const s of STORES){
+    const hasAny=keys.some(k=>data.months[k].stocks?.[s]||data.months[k].stores?.[s]);
+    if(!hasAny)continue;
+    h+=`<tr><td><span class="dot" style="background:${COLORS[s]}"></span><b>${s}</b></td>`;
+    for(const k of keys){
+      const m=data.months[k],sk=m.stocks?.[s],d=m.stores?.[s];
+      const retail=sk?.retail||null,rev=d?.rev||null;
+      const coef=(retail&&rev)?rev/retail:null;
+      h+=`<td style="border-left:1px solid var(--panel-br)">${retail?fmt(retail):'—'}</td><td>${rev?fmt(rev):'—'}</td>`;
+      h+= coef==null?'<td>—</td>':`<td><span class="tag ${coef<0.5?'bad':'good'}">${coef.toFixed(2)}</span></td>`;
+    }
+    h+='</tr>';
+  }
+  h+='<tr class="total"><td>ИТОГО сеть</td>'+keys.map((k,i)=>{
+    const coef=(T[i].retail&&T[i].rev)?T[i].rev/T[i].retail:null;
+    return `<td style="border-left:1px solid var(--panel-br)">${T[i].retail?fmt(T[i].retail):'—'}</td><td>${T[i].rev?fmt(T[i].rev):'—'}</td><td>${coef!=null?coef.toFixed(2):'—'}</td>`;
+  }).join('')+'</tr>';
+  document.getElementById('t-svp').innerHTML=keys.length?h:'<tr><td class="note">Нет данных.</td></tr>';
+}
+
+/* ===== ОБОРАЧИВАЕМОСТЬ ===== */
+function renderTurn(){
+  const keys=mKeys();
+  // Таблица по сети: Общий склад (продажная) | Общие продажи | Коэф. = Продажи ÷ Склад
+  let h='<tr><th>Месяц</th><th>Общий склад ₸ (продажн.)</th><th>Общие продажи ₸</th><th>Коэф. оборач.</th></tr>';
+  const netCoef=[];
+  for(const k of keys){
+    const st=Object.values(data.months[k].stocks||{}).reduce((a,s)=>a+(s.retail||0),0);
+    const rev=Object.values(data.months[k].stores||{}).reduce((a,s)=>a+(s.rev||0),0);
+    const coef=(st&&rev)?rev/st:null;
+    netCoef.push(coef);
+    h+=`<tr><td>${mLabel(k)}</td><td>${st?fmt(st):'—'}</td><td>${rev?fmt(rev):'—'}</td>`;
+    h+= coef==null?'<td>—</td>':`<td><span class="tag ${coef<0.5?'bad':'good'}">${coef.toFixed(2)}</span></td>`;
+    h+='</tr>';
+  }
+  document.getElementById('t-turn').innerHTML=keys.length?h:'<tr><td class="note">Нет данных.</td></tr>';
+
+  // График динамики коэф. по сети
+  mkChart('ch-turn','line',{labels:keys.map(mShort),datasets:[
+    {label:'Коэф. оборач. (сеть)',data:netCoef,borderColor:'#6d5ef0',backgroundColor:'rgba(109,94,240,.12)',fill:true,tension:0,spanGaps:true}]});
+
+  // блок по точкам: ср. коэф. (по месяцам кроме последнего) + склад за последний месяц с продажами
+  const salesKeys=keys.filter(k=>Object.keys(data.months[k].stores||{}).length);
+  const avgKeys=salesKeys.slice(0,-1); // Excel считает средний без последнего месяца
+  const lastSales=salesKeys[salesKeys.length-1]||null;
+  const rows=STORES.map(s=>{
+    const coefs=[];
+    for(const k of avgKeys){
+      const sk=data.months[k].stocks?.[s],d2=data.months[k].stores?.[s];
+      if(sk&&sk.retail&&d2&&d2.rev)coefs.push(d2.rev/sk.retail);
+    }
+    const avg=coefs.length?coefs.reduce((a,b)=>a+b,0)/coefs.length:null;
+    const lastStock=lastSales?data.months[lastSales].stocks?.[s]?.retail:null;
+    return {s,avg,lastStock};
+  }).filter(r=>r.avg!=null).sort((a,b)=>b.avg-a.avg);
+  let h2='<tr><th>Магазин</th><th>Ср. коэф.</th><th>Склад '+(lastSales?mShort(lastSales):'')+' ₸ (продажн.)</th></tr>';
+  for(const r of rows)
+    h2+=`<tr><td><span class="dot" style="background:${COLORS[r.s]}"></span>${r.s}</td><td><span class="tag ${r.avg<0.5?'bad':'good'}">${r.avg.toFixed(2)}</span></td><td>${r.lastStock?fmt(r.lastStock):'—'}</td></tr>`;
+  document.getElementById('t-turn2').innerHTML=rows.length?h2:'<tr><td class="note">Нет данных.</td></tr>';
+}
+
+/* ===== ОСТАТКИ СКЛАДОВ ===== */
+function renderStocks(){
+  const keys=mKeys();
+  const cont=document.getElementById('stocks-all');
+  const active=STORES.filter(s=>keys.some(k=>data.months[k].stocks?.[s]));
+  if(!active.length){cont.innerHTML='<div class="card"><div class="note">Остатки складов ещё не загружены.</div></div>';return;}
+  // строим разметку: на каждую точку — карточка с таблицей слева и графиком справа
+  let html='';
+  for(const s of active){
+    html+=`<div class="card" style="margin-bottom:14px;border-left:4px solid ${COLORS[s]}">
+      <div class="ct" style="font-size:15px"><span class="dot" style="background:${COLORS[s]};width:12px;height:12px"></span>${s}</div>
+      <div class="stocks-row" style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start">
+        <div class="scroll"><table id="ts-${s}"></table></div>
+        <div style="height:240px"><canvas id="cs-${s}"></canvas></div>
+      </div></div>`;
+  }
+  cont.innerHTML=html;
+  // адаптив: на узком экране колонки в один столбец
+  if(!document.getElementById('stocks-css')){
+    const st=document.createElement('style');st.id='stocks-css';
+    st.textContent='@media(max-width:820px){.stocks-row{grid-template-columns:1fr!important}}';
+    document.head.appendChild(st);
+  }
+  for(const s of active){
+    let h='<tr><th colspan="4"></th><th colspan="3" class="ana-hdr">📊 АНАЛИТИКА</th></tr>'+
+      '<tr><th>Месяц</th><th>Закуп ₸</th><th>Продажная ₸</th><th>Наценка</th><th class="ana-sep">Коэф.</th><th class="ana">Δ Закуп м/м</th><th class="ana">Δ Прод. м/м</th></tr>';
+    const P=[],R=[];let prevP=null,prevR=null;
+    for(const k of keys){
+      const sk=data.months[k].stocks?.[s],d=data.months[k].stores?.[s];
+      P.push(sk?.purchase||null);R.push(sk?.retail||null);
+      if(!sk){h+=`<tr><td>${mLabel(k)}</td><td>—</td><td>—</td><td>—</td><td class="ana-sep">—</td><td class="ana">—</td><td class="ana">—</td></tr>`;continue;}
+      const markup=sk.purchase?(sk.retail/sk.purchase):null;
+      const coef=(d&&d.rev)?d.rev/sk.retail:null;
+      const dP=(prevP&&sk.purchase)?(sk.purchase-prevP)/prevP:null;
+      const dR=(prevR&&sk.retail)?(sk.retail-prevR)/prevR:null;
+      const dCell=x=>x==null?'—':`<span class="${x<0?'neg':'pos'}">${x>=0?'+':''}${(x*100).toFixed(1)}%</span>`;
+      const coefCell=coef==null?'—':`<span class="tag ${coef<0.5?'bad':'good'}">${coef.toFixed(2)}</span>`;
+      h+=`<tr><td>${mLabel(k)}</td><td>${fmt(sk.purchase)}</td><td>${fmt(sk.retail)}</td><td>${markup?markup.toFixed(2)+'x':'—'}</td><td class="ana-sep">${coefCell}</td><td class="ana">${dCell(dP)}</td><td class="ana">${dCell(dR)}</td></tr>`;
+      prevP=sk.purchase;prevR=sk.retail;
+    }
+    document.getElementById('ts-'+s).innerHTML=h;
+    mkChart('cs-'+s,'line',{labels:keys.map(mShort),datasets:[
+      {label:'Закупная',data:P,borderColor:COLORS[s],backgroundColor:'transparent',tension:0,spanGaps:true},
+      {label:'Продажная',data:R,borderColor:'#6d5ef0',backgroundColor:'rgba(109,94,240,.10)',fill:true,tension:0,spanGaps:true}]});
+  }
+}
+
+/* ===== ИСТОРИЯ ВЫРУЧКИ ===== */
+const HIST_STORES=['Кисилево','Жилгородок','Акация','Шернияза','11 мкр','ХБК','Вокзал','Хромтау','Орал'];
+const HIST_COLORS={'Кисилево':'#1f9d8f','Жилгородок':'#2b8ac6','Акация':'#7d54d4','Шернияза':'#d9a520','11 мкр':'#c0508a','ХБК':'#9b59d0','Вокзал':'#e05656','Хромтау':'#2e86c1','Орал':'#1f9d57'};
+function renderHist(){
+  const keys=mKeys();
+  const rowsEarly=(data.historyRows||[]).slice(); // {year,m,label,stores,total}
+  // ряды из приложения (Авг2025+) — по точкам
+  const rowsApp=keys.map(k=>{
+    const m=data.months[k],stores={};
+    for(const s of STORES){const d=m.stores?.[s];if(d&&d.rev)stores[s]=d.rev;}
+    return {label:mLabel(k),stores,total:netTotals(m).rev};
+  });
+  const all=[...rowsEarly,...rowsApp];
+  // годовая сводка: из файла (historyYears) + пересчёт текущего года из приложения
+  const years=(data.historyYears||[]).map(y=>({...y}));
+  const appByYear={};
+  for(const k of keys){const y=+k.split('-')[0];appByYear[y]=(appByYear[y]||0)+netTotals(data.months[k]).rev;}
+  for(const y in appByYear){
+    const ex=years.find(v=>v.year==y);
+    if(ex)ex.total=(ex.total||0)+appByYear[y]; else years.push({year:+y,total:appByYear[y]});
+  }
+  const early2526={};
+  for(const r of rowsEarly){if(r.year>=2025){early2526[r.year]=(early2526[r.year]||0)+r.total;}}
+  for(const y of years){ if(y.year>=2025){ y.total=(early2526[y.year]||0)+(appByYear[y.year]||0);} }
+  years.sort((a,b)=>a.year-b.year);
+
+  // график 1: линия выручки ПО ГОДАМ
+  mkChart('ch-hist','line',{labels:years.map(y=>y.year),datasets:[
+    {label:'Выручка сети за год',data:years.map(y=>y.total),borderColor:'#2b8ac6',backgroundColor:'rgba(43,138,198,.12)',fill:true,tension:0.3}]});
+
+  // график 2: столбцы по годам
+  mkChart('ch-hist-year','bar',{labels:years.map(y=>y.year),datasets:[
+    {label:'Выручка за год',data:years.map(y=>y.total),backgroundColor:years.map((y,i)=>['#2b8ac6','#1f9d8f','#7d54d4','#d9a520','#c0508a','#9b59d0','#e05656','#1f9d57'][i%8])}]});
+
+  let hy='<tr><th>Год</th><th>Итого за год ₸</th></tr>';
+  for(const y of years)hy+=`<tr><td>${y.year}</td><td>${fmt(y.total)}</td></tr>`;
+  document.getElementById('t-hist-year').innerHTML=hy;
+
+  // полная таблица по точкам
+  const usedStores=HIST_STORES.filter(s=>all.some(r=>r.stores[s]));
+  let h='<tr><th>Период</th>'+usedStores.map(s=>`<th><span class="dot" style="background:${HIST_COLORS[s]||'#888'}"></span>${s}</th>`).join('')+'<th>ИТОГО ₸</th></tr>';
+  for(const r of all){
+    h+=`<tr><td>${r.label}</td>`;
+    for(const s of usedStores)h+=`<td>${r.stores[s]?fmt(r.stores[s]):'—'}</td>`;
+    h+=`<td><b>${fmt(r.total)}</b></td></tr>`;
+  }
+  document.getElementById('t-hist').innerHTML=all.length?h:'<tr><td class="note">Истории нет — загрузи данные.</td></tr>';
+}
+
+/* ===== МАГАЗИНЫ ===== */
+function renderStore(){
+  const s=document.getElementById('store-sel').value||STORES[0];
+  const keys=mKeys().filter(k=>data.months[k].stores?.[s]);
+  const kp=document.getElementById('store-kpis');
+  if(!keys.length){kp.innerHTML='';document.getElementById('t-store').innerHTML='<tr><td class="note">По этой точке нет данных.</td></tr>';document.getElementById('t-store-pct').innerHTML='';
+    mkChart('ch-store1','line',{labels:[],datasets:[]});mkChart('ch-store2','bar',{labels:[],datasets:[]});return;}
+  const last=keys[keys.length-1],dL=data.months[last].stores[s],cL=calc(dL,data.months[last].stocks?.[s]?.purchase);
+  const totRev=keys.reduce((a,k)=>a+(data.months[k].stores[s].rev||0),0);
+  const totProf=keys.reduce((a,k)=>a+calc(data.months[k].stores[s]).profit,0);
+  kp.innerHTML=`
+   <div class="card"><div class="kpi-l">${mLabel(last)} · выручка</div><div class="kpi-v">${fmtM(dL.rev)}</div></div>
+   <div class="card"><div class="kpi-l">${mLabel(last)} · прибыль</div><div class="kpi-v">${fmtM(cL.profit)}</div><div class="kpi-s ${cL.netM<0?'bad':cL.netM<.15?'warn':'good'}">маржа ${pct(cL.netM)}</div></div>
+   <div class="card"><div class="kpi-l">Выручка за всё время</div><div class="kpi-v">${fmtM(totRev)}</div></div>
+   <div class="card"><div class="kpi-l">Прибыль за всё время</div><div class="kpi-v">${fmtM(totProf)}</div><div class="kpi-s">${pct(totRev?totProf/totRev:null)} средняя маржа</div></div>`;
+
+  const ROWS=[
+    ['Выручка',(d,c)=>d.rev],['Товар/закуп',(d)=>d.goods],['Аренда+инт.',(d)=>d.rent],
+    ['ЗП продавцов',(d)=>d.salary],['Прочее',(d)=>d.other],['Итого расход',(d,c)=>c.exp],
+    ['Прибыль',(d,c)=>c.profit],['Чист. маржа',(d,c)=>c.netM,'pct'],['% ЗП от выручки',(d,c)=>c.zp,'pct'],
+    ['Склад (закуп)',(d,c,sk)=>sk?.purchase],['Коэф. оборач.',(d,c)=>c.coef,'coef']];
+  const ROW_STYLE={
+    'Выручка':'rev','Товар/закуп':'goods','Аренда+инт.':'rent','ЗП продавцов':'salary','Прочее':'other',
+    'Итого расход':'exp','Прибыль':'profit','Чист. маржа':'marg','% ЗП от выручки':'zp','Склад (закуп)':'stock','Коэф. оборач.':'coefr'};
+  let h='<tr><th>Показатель</th>'+keys.map(k=>`<th>${mShort(k)}</th>`).join('')+'<th>Итого</th><th>Среднее</th></tr>';
+  for(const[label,fn,kind]of ROWS){
+    const vals=keys.map(k=>{const m=data.months[k],d=m.stores[s],sk=m.stocks?.[s];return fn(d,calc(d,sk?.purchase),sk);});
+    const nums=vals.filter(v=>v!=null&&!isNaN(v));
+    const isP=kind==='pct',isC=kind==='coef';
+    const cell=v=>v==null||isNaN(v)?'—':isP?pct(v):isC?v.toFixed(2):fmt(v);
+    const sum=isP||isC?null:nums.reduce((a,b)=>a+b,0);
+    const avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:null;
+    const rc='mrow-'+(ROW_STYLE[label]||'');
+    h+=`<tr class="${rc}"><td class="mlabel">${label}</td>${vals.map(v=>`<td class="${label==='Прибыль'&&v<0?'neg':''}">${cell(v)}</td>`).join('')}<td>${sum!=null?fmt(sum):'—'}</td><td>${cell(avg)}</td></tr>`;
+  }
+  document.getElementById('t-store').innerHTML=h;
+
+  let hp='<tr><th>Доля в расходах</th>'+keys.map(k=>`<th>${mShort(k)}</th>`).join('')+'</tr>';
+  for(const[label,f]of[['Товар %','goods'],['Аренда %','rent'],['ЗП %','salary'],['Прочее %','other']]){
+    hp+=`<tr><td>${label}</td>`+keys.map(k=>{
+      const d=data.months[k].stores[s],c=calc(d);
+      return `<td>${c.exp?pct((d[f]||0)/c.exp):'—'}</td>`;}).join('')+'</tr>';
+  }
+  document.getElementById('t-store-pct').innerHTML=hp;
+
+  const T=keys.map(k=>{const d=data.months[k].stores[s];return{d,c:calc(d)};});
+  mkChart('ch-store1','line',{labels:keys.map(mShort),datasets:[
+    {label:'Выручка',data:T.map(x=>x.d.rev),borderColor:COLORS[s],tension:0},
+    {label:'Прибыль',data:T.map(x=>x.c.profit),borderColor:'#1f9d57',tension:0}]});
+  mkChart('ch-store2','bar',{labels:keys.map(mShort),datasets:[
+    ['goods','Товар','#3f7fc4'],['salary','ЗП','#e05a4e'],['rent','Аренда','#d9b323'],['other','Прочее','#9b59d0']]
+    .map(([f,l,c])=>({label:l,data:T.map(x=>x.c.exp?(x.d[f]||0)/x.c.exp*100:0),backgroundColor:c,stack:'p'}))},{stacked:true,max:100});
+}
+
+/* ===== НОВЫЙ МЕСЯЦ: загрузка/парсинг ===== */
+function initUp(){
+  const now=new Date();
+  document.getElementById('up-month').innerHTML=MONTHS_RU.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  document.getElementById('up-month').value=now.getMonth()+1;
+  const y=now.getFullYear();
+  document.getElementById('up-year').innerHTML=[y-1,y,y+1].map(v=>`<option>${v}</option>`).join('');
+  document.getElementById('up-year').value=y;
+  bindDrop('drop-fin','file-fin',f=>readXlsx(f,parseFin));
+  bindDrop('drop-stock','file-stock',f=>readXlsx(f,parseStock));
+  bindDrop('drop-imp','file-imp',f=>readXlsx(f,importDashboard));
+  document.getElementById('file-json').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=async()=>{try{data=JSON.parse(r.result);data.history=data.history||[];await persist();refreshAll();
+      showMsg('data-msg','Данные восстановлены из копии.','ok');}catch(err){showMsg('data-msg','Файл не похож на копию: '+err.message,'err');}};
+    r.readAsText(f);e.target.value='';
+  });
+  renderEdit();
+}
+function bindDrop(dropId,fileId,handler){
+  const d=document.getElementById(dropId),f=document.getElementById(fileId);
+  d.addEventListener('click',()=>f.click());
+  d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over');});
+  d.addEventListener('dragleave',()=>d.classList.remove('over'));
+  d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');if(e.dataTransfer.files[0])handler(e.dataTransfer.files[0]);});
+  f.addEventListener('change',e=>{if(e.target.files[0])handler(e.target.files[0]);e.target.value='';});
+}
+function readXlsx(file,cb){
+  const r=new FileReader();
+  r.onload=()=>{try{cb(XLSX.read(r.result,{type:'array'}),file.name);}
+    catch(e){showMsg('up-msg','Не удалось прочитать файл: '+e.message,'err');showMsg('data-msg','Не удалось прочитать файл: '+e.message,'err');}};
+  r.readAsArrayBuffer(file);
+}
+const ensurePending=()=>pending||(pending={stores:{},stocks:{}});
+function guessMonthFromName(name){
+  const low=name.toLowerCase();
+  MONTHS_RU.forEach((m,i)=>{if(low.includes(m.toLowerCase().slice(0,4)))document.getElementById('up-month').value=i+1;});
+  const y=low.match(/20\d\d/);
+  if(y){const sel=document.getElementById('up-year');
+    if(![...sel.options].some(o=>o.value===y[0]))sel.add(new Option(y[0],y[0]));sel.value=y[0];}
+}
+function parseFin(wb,fname){
+  guessMonthFromName(fname);
+  const p=ensurePending();let found=0;
+  for(const sn of wb.SheetNames){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null});
+    let map=null;
+    for(const row of rows){
+      if(!row)continue;const idx={};
+      row.forEach((c,i)=>{if(c==null)return;const s=String(c).toLowerCase();
+        if(/выруч|доход/.test(s)&&idx.rev==null)idx.rev=i;
+        if(/товар|закуп/.test(s)&&idx.goods==null)idx.goods=i;
+        if(/аренд/.test(s)&&idx.rent==null)idx.rent=i;
+        if(/зп|зарп|оклад/.test(s)&&idx.salary==null)idx.salary=i;
+        if(/проч/.test(s)&&idx.other==null)idx.other=i;});
+      if(idx.rev!=null&&idx.goods!=null){map=idx;break;}
+    }
+    for(const row of rows){
+      if(!row)continue;
+      let store=null,si=-1;
+      for(let i=0;i<Math.min(row.length,4);i++){const st=normStore(row[i]);if(st){store=st;si=i;break;}}
+      if(!store)continue;
+      const vals=map?{rev:num(row[map.rev]),goods:num(row[map.goods]),rent:num(row[map.rent]),salary:num(row[map.salary]),other:num(row[map.other])}
+        :{rev:num(row[si+1]),goods:num(row[si+2]),rent:num(row[si+3]),salary:num(row[si+4]),other:num(row[si+5])};
+      if(vals.rev||vals.goods){p.stores[store]=vals;found++;}
+    }
+    if(found)break;
+  }
+  showMsg('up-msg',found?`Расход/доход: распознано точек — ${found}. Проверь таблицу.`:'Строки с названиями точек не найдены — заполни таблицу вручную.',found?'ok':'err');
+  renderEdit();
+}
+function parseStock(wb){
+  const p=ensurePending();let found=0;
+  for(const sn of wb.SheetNames){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null});
+    for(const row of rows){
+      if(!row)continue;
+      let store=null,si=-1;
+      for(let i=0;i<Math.min(row.length,4);i++){const st=normStore(row[i]);if(st){store=st;si=i;break;}}
+      if(!store)continue;
+      const nums=row.slice(si+1).map(num).filter(v=>v>0);
+      if(nums.length){p.stocks[store]={purchase:nums[0],retail:nums[1]||0};found++;}
+    }
+    if(found)break;
+  }
+  showMsg('up-msg',found?`Остатки: распознано точек — ${found}.`:'Остатки не распознаны — впиши вручную.',found?'ok':'err');
+  renderEdit();
+}
+function renderEdit(){
+  const p=ensurePending();
+  let h='<tr><th>Точка</th>'+FIELDS.map(f=>`<th>${f[1]}</th>`).join('')+'<th>Остаток закуп</th><th>Остаток продажная</th></tr>';
+  for(const s of STORES){
+    const d=p.stores[s]||{},sk=p.stocks[s]||{};
+    h+=`<tr><td><span class="dot" style="background:${COLORS[s]}"></span>${s}</td>`;
+    for(const[f]of FIELDS)h+=`<td><input type="number" data-s="${s}" data-f="${f}" value="${d[f]??''}"></td>`;
+    h+=`<td><input type="number" data-s="${s}" data-f="purchase" value="${sk.purchase??''}"></td>`;
+    h+=`<td><input type="number" data-s="${s}" data-f="retail" value="${sk.retail??''}"></td></tr>`;
+  }
+  const el=document.getElementById('t-edit');el.innerHTML=h;
+  el.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',()=>{
+    const s=inp.dataset.s,f=inp.dataset.f,v=inp.value===''?null:num(inp.value);
+    if(f==='purchase'||f==='retail'){p.stocks[s]=p.stocks[s]||{};p.stocks[s][f]=v??0;}
+    else{p.stores[s]=p.stores[s]||{};p.stores[s][f]=v??0;}
+  }));
+}
+async function saveMonth(){
+  const p=ensurePending();
+  const mm=String(document.getElementById('up-month').value).padStart(2,'0');
+  const key=document.getElementById('up-year').value+'-'+mm;
+  const stores={},stocks={};
+  for(const s of STORES){
+    const d=p.stores[s];if(d&&(d.rev||d.goods||d.salary))stores[s]={rev:d.rev||0,goods:d.goods||0,rent:d.rent||0,salary:d.salary||0,other:d.other||0};
+    const sk=p.stocks[s];if(sk&&sk.purchase)stocks[s]={purchase:sk.purchase||0,retail:sk.retail||0};
+  }
+  if(!Object.keys(stores).length&&!Object.keys(stocks).length){showMsg('up-msg','Нет данных для сохранения.','err');return;}
+  const prev=data.months[key]||{};
+  data.months[key]={stores:Object.keys(stores).length?stores:(prev.stores||{}),stocks:Object.keys(stocks).length?stocks:(prev.stocks||{})};
+  await persist();pending=null;renderEdit();refreshAll();
+  showMsg('up-msg',mLabel(key)+' сохранён. Все вкладки обновлены.','ok');
+  go('dash');
+}
+
+/* ===== импорт дашборда ===== */
+function importDashboard(wb){
+  let added=0,stockRows=0,histRows=0;
+  const dataSheet=wb.SheetNames.find(n=>n.includes('Данные'));
+  if(dataSheet){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[dataSheet],{header:1,defval:null});
+    for(const row of rows){
+      if(!row||row.length<4)continue;
+      const key=parseMonthLabel(row[0]),store=normStore(row[1]);
+      if(!key||!store)continue;
+      data.months[key]=data.months[key]||{stores:{},stocks:{}};
+      data.months[key].stores[store]={rev:num(row[2]),goods:num(row[3]),rent:num(row[4]),salary:num(row[5]),other:num(row[6])};
+      added++;
+    }
+  }
+  const stSheet=wb.SheetNames.find(n=>n.includes('Остатки складов'));
+  if(stSheet){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[stSheet],{header:1,defval:null,blankrows:true});
+    // структура: колонка A — точка (один раз на блок), B — месяц (Авг..Июл), C — закуп, D — продажная
+    let curStore=null;
+    for(const row of rows){
+      if(!row)continue;
+      const c0=row[0]!=null?String(row[0]).trim():'';
+      if(c0){ const st=normStore(c0); if(st&&!/итого/i.test(c0))curStore=st; else if(/итого/i.test(c0))curStore=null; }
+      if(!curStore)continue;
+      const c1=row[1]!=null?String(row[1]).trim():'';
+      if(!c1||c1.includes('-'))continue; // пропуск будущих Сент-26 и т.п.
+      const mk=parseMonthLabel(c1);
+      if(!mk)continue;
+      const p=num(row[2]);
+      if(p>0){
+        data.months[mk]=data.months[mk]||{stores:{},stocks:{}};
+        data.months[mk].stocks[curStore]={purchase:Math.round(p),retail:Math.round(num(row[3]))};
+        stockRows++;
+      }
+    }
+  }
+  const hSheet=wb.SheetNames.find(n=>n.includes('История'));
+  if(hSheet){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[hSheet],{header:1,defval:null});
+    // структура: A — год (один раз), B — месяц, L (index 11) — ИТОГО сети
+    const hist=[];let year=null;
+    for(const row of rows){
+      if(!row)continue;
+      const y=num(row[0]); if(y>=2015&&y<=2100)year=y;
+      const mk0=row[1]!=null?parseMonthLabel(String(row[1]).trim()):null;
+      const tot=num(row[11]);
+      if(!year||!mk0||!(tot>0))continue;
+      const mNum=+mk0.split('-')[1];
+      if(year>2025||(year===2025&&mNum>=8))continue; // с Авг 2025 данные помесячные
+      hist.push({label:MONTHS_RU[mNum-1]+' '+year,rev:Math.round(tot)});
+    }
+    if(hist.length){data.history=hist;histRows=hist.length;}
+  }
+  persist().then(()=>{refreshAll();
+    showMsg('data-msg',added?`Импортировано: строк данных — ${added}`+(stockRows?`, остатков — ${stockRows}`:'')+(histRows?`, истории — ${histRows}`:'')+'. Всё готово.':'Лист «📊 Данные» не найден или пуст — проверь файл.',added?'ok':'err');});
+}
+function parseMonthLabel(v){
+  if(v==null)return null;
+  if(v instanceof Date)return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0');
+  const s=String(v).trim().toLowerCase();
+  for(let i=0;i<12;i++){
+    if(s.startsWith(MONTHS_RU[i].toLowerCase())||s.startsWith(M_SHORT[i].toLowerCase())){
+      const y=s.match(/20\d\d/);const year=y?y[0]:(i+1>=8?'2025':'2026');
+      return year+'-'+String(i+1).padStart(2,'0');
+    }
+  }
+  return null;
+}
+
+/* ===== список месяцев ===== */
+function renderMonthsList(){
+  const keys=mKeys();
+  let h='<tr><th>Месяц</th><th>Точек с данными</th><th>Точек с остатками</th><th>Выручка</th><th>Прибыль</th><th></th></tr>';
+  if(!keys.length)h='<tr><td class="note">Пока пусто.</td></tr>';
+  for(const k of keys.slice().reverse()){
+    const m=data.months[k],t=netTotals(m);
+    h+=`<tr><td>${mLabel(k)}</td><td>${Object.keys(m.stores||{}).length}</td><td>${Object.keys(m.stocks||{}).length}</td>
+    <td>${fmt(t.rev)}</td><td class="${t.profit<0?'neg':'pos'}">${fmt(t.profit)}</td>
+    <td><button class="btn danger sm" onclick="delMonth('${k}')">Удалить</button></td></tr>`;
+  }
+  document.getElementById('t-months').innerHTML=h;
+}
+async function delMonth(k){
+  if(!confirm('Удалить '+mLabel(k)+'? Действие нельзя отменить.'))return;
+  delete data.months[k];await persist();refreshAll();
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='topglass_финансы_копия.json';a.click();
+}
+
+/* ===== старт ===== */
+buildNav();initUp();loadData();
+</script>
+</body>
+</html>
