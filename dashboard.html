@@ -1,0 +1,913 @@
+<title>Склад 20.09.2026</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg:       #F0F4F9;
+  --surface:  #FFFFFF;
+  --surface2: #F8FAFC;
+  --surface3: #EFF6FF;
+  --t1: #0F172A;
+  --t2: #475569;
+  --t3: #94A3B8;
+  --bd: #E2E8F0;
+  --ac: #2563EB;
+  --am: #D97706;
+  --am-bg: #FEF3C7;
+  --gr: #059669;
+  --gr-bg: #D1FAE5;
+  --re: #DC2626;
+  --re-bg: #FEE2E2;
+  --sh: 0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) { --bg:#080C14;--surface:#101624;--surface2:#141D2C;--surface3:#1A2338;--t1:#F1F5F9;--t2:#94A3B8;--t3:#475569;--bd:#1E2D42;--ac:#3B82F6;--am:#F59E0B;--am-bg:rgba(245,158,11,.12);--gr:#10B981;--gr-bg:rgba(16,185,129,.12);--re:#F87171;--re-bg:rgba(248,113,113,.12);--sh:0 1px 3px rgba(0,0,0,.4); }}
+:root[data-theme="dark"]           { --bg:#080C14;--surface:#101624;--surface2:#141D2C;--surface3:#1A2338;--t1:#F1F5F9;--t2:#94A3B8;--t3:#475569;--bd:#1E2D42;--ac:#3B82F6;--am:#F59E0B;--am-bg:rgba(245,158,11,.12);--gr:#10B981;--gr-bg:rgba(16,185,129,.12);--re:#F87171;--re-bg:rgba(248,113,113,.12);--sh:0 1px 3px rgba(0,0,0,.4); }
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5}
+
+/* ── header ──────────────────────────────────────────────────────── */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:200;background:var(--surface);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;box-shadow:var(--sh)}
+.hdr-logo{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:15px;display:flex;align-items:center;gap:9px}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--ac)}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-date{font-size:12px;color:var(--t3)}
+.hdr-badge{font-size:11px;font-weight:600;background:var(--surface2);border:1px solid var(--bd);border-radius:5px;padding:3px 8px;color:var(--t2)}
+.theme-btn{background:var(--surface2);border:1px solid var(--bd);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:14px;color:var(--t2);line-height:1;transition:.15s}
+.theme-btn:hover{background:var(--bd)}
+
+/* ── nav ─────────────────────────────────────────────────────────── */
+nav{background:var(--surface);border-bottom:1px solid var(--bd);padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;position:sticky;top:calc(56px + env(safe-area-inset-top,0px));z-index:100}
+nav::-webkit-scrollbar{display:none}
+.tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;text-decoration:none}
+.tab:hover,.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+
+/* ── main ────────────────────────────────────────────────────────── */
+main{max-width:1200px;margin:0 auto;padding:32px 24px 80px}
+section{margin-bottom:52px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.sec-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700;color:var(--t1);margin-bottom:20px;text-wrap:balance}
+
+/* ── KPI tiles ───────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.kpi-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);margin-bottom:12px}
+.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:12px;color:var(--t3)}
+.kpi-bar{position:absolute;bottom:0;left:0;height:3px;width:100%;border-radius:0 0 12px 12px}
+.kpi-am .kpi-val{color:var(--am)} .kpi-am .kpi-bar{background:var(--am)}
+.kpi-gr .kpi-val{color:var(--gr)} .kpi-gr .kpi-bar{background:var(--gr)}
+.kpi-ac .kpi-val{color:var(--ac)} .kpi-ac .kpi-bar{background:var(--ac)}
+.kpi-t1 .kpi-val{color:var(--t1)} .kpi-t1 .kpi-bar{background:var(--bd)}
+
+/* ── cards ───────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:24px;box-shadow:var(--sh)}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;color:var(--t1);margin-bottom:3px}
+.card-sub{font-size:12px;color:var(--t3);margin-bottom:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.two{grid-template-columns:1fr}}
+
+/* ── chart ───────────────────────────────────────────────────────── */
+.chart-wrap{position:relative;height:360px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2)}
+.legend-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── ABC summary cards ───────────────────────────────────────────── */
+.abc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:500px){.abc-row{grid-template-columns:1fr}}
+.abc-card{border-radius:10px;padding:18px;text-align:center}
+.abc-A{background:var(--re-bg);border:1px solid rgba(220,38,38,.25)}
+.abc-B{background:var(--am-bg);border:1px solid rgba(217,119,6,.25)}
+.abc-C{background:var(--gr-bg);border:1px solid rgba(5,150,105,.25)}
+.abc-cls{font-family:'Plus Jakarta Sans',sans-serif;font-size:36px;font-weight:800;line-height:1}
+.abc-A .abc-cls{color:var(--re)} .abc-B .abc-cls{color:var(--am)} .abc-C .abc-cls{color:var(--gr)}
+.abc-lbl{font-size:11px;font-weight:600;color:var(--t3);margin-top:8px;text-transform:uppercase;letter-spacing:.04em}
+.abc-num{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--t1);margin-top:6px}
+.abc-hint{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.4}
+
+/* ── product table ───────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto}
+table.prod{width:100%;border-collapse:collapse}
+table.prod th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);padding:0 12px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+table.prod th.r{text-align:right}
+table.prod td{padding:11px 12px;border-bottom:1px solid var(--bd);font-size:13px;color:var(--t2);vertical-align:middle}
+table.prod tr:last-child td{border-bottom:none}
+table.prod tbody tr:hover td{background:var(--surface2)}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.r1{background:rgba(245,158,11,.18);color:#B45309}.r2{background:rgba(148,163,184,.15);color:#475569}.r3{background:rgba(180,83,9,.12);color:#9A3412}.rn{background:var(--surface2);color:var(--t3)}
+.prod-name{font-weight:600;color:var(--t1);margin-bottom:2px;font-size:13px}
+.prod-cat{font-size:11px;color:var(--t3)}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;color:var(--t1);white-space:nowrap;font-size:13px}
+.qty-cell{color:var(--t3);font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+
+/* inline data bar */
+.barfield{position:relative;min-width:130px;padding-right:12px}
+.barfield-bg{height:5px;border-radius:3px;background:var(--bd);margin-top:6px}
+.barfield-fg{height:100%;border-radius:3px;background:var(--am)}
+
+/* ── dead stock ──────────────────────────────────────────────────── */
+.dead-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:18px}
+.dead-item{background:var(--surface2);border:1px solid var(--bd);border-radius:9px;padding:14px}
+.dead-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);margin-bottom:6px}
+.dead-val{font-size:15px;font-weight:700;color:var(--am);font-variant-numeric:tabular-nums}
+.dead-sub{font-size:11px;color:var(--t3);margin-top:3px}
+
+.alert{border-radius:10px;padding:14px 18px;display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.alert-warn{background:var(--am-bg);border:1px solid rgba(217,119,6,.25)}
+.alert-icon{font-size:18px;line-height:1;flex-shrink:0;margin-top:1px}
+.alert-title{font-weight:600;font-size:13px;color:var(--am);margin-bottom:3px}
+.alert-body{font-size:12px;color:var(--t2);line-height:1.6}
+
+.highlight{font-weight:700;color:var(--t1)}
+
+/* ── summary bottom ─────────────────────────────────────────────── */
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+.srow-item{background:var(--surface2);border:1px solid var(--bd);border-radius:9px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.srow-icon{font-size:22px;flex-shrink:0}
+.srow-label{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.srow-val{font-size:15px;font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
+
+/* ── insights ────────────────────────────────────────────────── */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:16px}
+.store-card{background:var(--surface);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
+.store-card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;color:var(--t1);margin-bottom:10px}
+.store-stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.store-stat-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+.store-stat-val{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--t1)}
+.pct-bar-bg{height:6px;border-radius:3px;background:var(--bd);margin-top:10px}
+.pct-bar-fg{height:100%;border-radius:3px;transition:.3s}
+.pct-label{font-size:11px;margin-top:5px;font-weight:700;font-variant-numeric:tabular-nums}
+.status-badge{display:inline-block;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.badge-red{background:var(--re-bg);color:var(--re)}
+.badge-yellow{background:var(--am-bg);color:var(--am)}
+.badge-green{background:var(--gr-bg);color:var(--gr)}
+.badge-gray{background:var(--surface2);color:var(--t3)}
+
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:700px){.insight-grid{grid-template-columns:1fr}}
+
+.sys-cat-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd);gap:10px}
+.sys-cat-row:last-child{border-bottom:none}
+.sys-dots{display:flex;gap:3px;flex-shrink:0}
+.sys-dot{width:8px;height:8px;border-radius:50%}
+.sys-dot-fill{background:var(--re)}
+.sys-dot-empty{background:var(--bd)}
+.sys-cat-name{font-size:13px;font-weight:600;color:var(--t1);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sys-cat-stores{font-size:11px;color:var(--t3);flex-shrink:0;white-space:nowrap}
+.sys-cat-val{font-size:13px;font-weight:700;color:var(--am);font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap}
+
+.anomaly-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--bd)}
+.anomaly-item:last-child{border-bottom:none}
+.anomaly-icon{font-size:20px;flex-shrink:0;line-height:1;margin-top:1px}
+.anomaly-title{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.anomaly-body{font-size:12px;color:var(--t2);line-height:1.5}
+.anomaly-val{font-weight:700;color:var(--re)}
+
+.reco-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.reco-item{display:flex;gap:10px;align-items:flex-start}
+.reco-num{width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.reco-text{font-size:12px;color:var(--t2);line-height:1.6}
+.reco-text strong{color:var(--t1)}
+
+.insight-kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.ikpi{background:var(--surface);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;text-align:center}
+.ikpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--t1);font-variant-numeric:tabular-nums}
+.ikpi-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:4px}
+
+@media(max-width:600px){
+  main{padding:20px 16px 60px}
+  .hdr{padding:0 16px}
+  nav{padding:0 16px}
+  .kpi-val{font-size:22px}
+  .sec-title{font-size:18px}
+  .chart-wrap{height:420px}
+}
+</style>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo"><div class="hdr-dot"></div>Анализ склада</div>
+  <div class="hdr-right">
+    <span class="hdr-date">20 сентября 2026</span>
+    <span class="hdr-badge">2 286 SKU</span>
+    <button class="theme-btn" id="themeBtn" title="Сменить тему">🌙</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav id="navTabs">
+  <a class="tab active" href="#kpi">Сводка</a>
+  <a class="tab" href="#cats">Категории</a>
+  <a class="tab" href="#top">Топ товаров</a>
+  <a class="tab" href="#dead">Мёртвый сток</a>
+  <a class="tab" href="#insights">Инсайты магазинов</a>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ① KPI ──────────────────────────────────────────────────────── -->
+  <section id="kpi">
+    <p class="eyebrow">Склад · 20.09.2026</p>
+    <h2 class="sec-title">Общая картина</h2>
+    <div class="kpi-grid">
+      <div class="kpi kpi-am">
+        <div class="kpi-label">Заморожено денег</div>
+        <div class="kpi-val">28,3 млн ₸</div>
+        <div class="kpi-sub">по закупочным ценам</div>
+        <div class="kpi-bar"></div>
+      </div>
+      <div class="kpi kpi-gr">
+        <div class="kpi-label">Потенц. выручка</div>
+        <div class="kpi-val">98,0 млн ₸</div>
+        <div class="kpi-sub">по продажным ценам</div>
+        <div class="kpi-bar"></div>
+      </div>
+      <div class="kpi kpi-ac">
+        <div class="kpi-label">Средняя наценка</div>
+        <div class="kpi-val">246%</div>
+        <div class="kpi-sub">закуп → продажа</div>
+        <div class="kpi-bar"></div>
+      </div>
+      <div class="kpi kpi-t1">
+        <div class="kpi-label">Всего позиций</div>
+        <div class="kpi-val">2 286</div>
+        <div class="kpi-sub">уникальных SKU · 126 тыс. шт.</div>
+        <div class="kpi-bar"></div>
+      </div>
+    </div>
+
+    <!-- ABC -->
+    <div style="margin-top:20px">
+      <div class="card">
+        <div class="card-title">ABC-анализ по закупочной стоимости</div>
+        <div class="card-sub">Какой % товаров держит 80% замороженных денег</div>
+        <div class="abc-row">
+          <div class="abc-card abc-A">
+            <div class="abc-cls">A</div>
+            <div class="abc-num">≈ 250 SKU · 11%</div>
+            <div class="abc-lbl">Критичный</div>
+            <div class="abc-hint">80% денег склада<br>требуют контроля продаж</div>
+          </div>
+          <div class="abc-card abc-B">
+            <div class="abc-cls">B</div>
+            <div class="abc-num">≈ 400 SKU · 17%</div>
+            <div class="abc-lbl">Важный</div>
+            <div class="abc-hint">15% денег склада<br>важный ассортимент</div>
+          </div>
+          <div class="abc-card abc-C">
+            <div class="abc-cls">C</div>
+            <div class="abc-num">≈ 1 637 SKU · 72%</div>
+            <div class="abc-lbl">Прочее</div>
+            <div class="abc-hint">5% денег склада<br>широкий ассортимент</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② КАТЕГОРИИ ──────────────────────────────────────────────── -->
+  <section id="cats">
+    <p class="eyebrow">Структура</p>
+    <h2 class="sec-title">Рейтинг категорий</h2>
+    <div class="card">
+      <div class="card-title">Заморожено vs потенц. выручка по категориям</div>
+      <div class="card-sub">Топ-10 категорий по сумме закупа · инвентарь магазина исключён</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#F59E0B"></div>Закуп (заморожено)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#0EA5E9"></div>Потенц. выручка</div>
+      </div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+    </div>
+
+    <!-- category table -->
+    <div style="margin-top:14px" class="card">
+      <div class="card-title">Все категории — закуп и выручка</div>
+      <div class="card-sub" style="margin-bottom:14px">Сортировка по сумме закупа · Атрибутика отмечена ⚠ — продажная цена не установлена</div>
+      <div class="tbl-wrap">
+        <table class="prod" id="catTable">
+          <thead><tr>
+            <th>#</th><th>Категория</th><th class="r">SKU</th>
+            <th class="r">Закуп, ₸</th><th class="r">Потенц. выручка, ₸</th><th class="r">Наценка</th>
+          </tr></thead>
+          <tbody id="catTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ ТОП ТОВАРОВ ────────────────────────────────────────────── -->
+  <section id="top">
+    <p class="eyebrow">Товары</p>
+    <h2 class="sec-title">Топ-10 товаров по замороженным деньгам</h2>
+    <div class="card">
+      <div class="card-title">Конкретные позиции, держащие наибольший закуп</div>
+      <div class="card-sub">Шире полоска — больше денег заморожено</div>
+      <div class="tbl-wrap">
+        <table class="prod" id="topTable">
+          <thead><tr>
+            <th>#</th><th>Товар</th><th class="r">Кол-во</th>
+            <th>Заморожено, ₸</th><th class="r">Потенц. выручка</th>
+          </tr></thead>
+          <tbody id="topTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ МЁРТВЫЙ СТОК ───────────────────────────────────────────── -->
+  <section id="dead">
+    <p class="eyebrow">Проблемы</p>
+    <h2 class="sec-title">Залежалый сток — без движения 6 месяцев</h2>
+
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">293 позиции без движения за 6 месяцев</div>
+        <div class="alert-body">
+          Заморожено по закупу: <span class="highlight">1 470 020 ₸</span> · потенц. выручка: <span class="highlight">4 653 114 ₸</span><br>
+          Это <span class="highlight">5,2%</span> всех замороженных денег склада — пора принять меры.<br>
+          Рекомендация: уценить для быстрой продажи, сделать акцию или вернуть поставщику.
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-row">
+      <div class="srow-item">
+        <div class="srow-icon">📦</div>
+        <div><div class="srow-label">Позиций</div><div class="srow-val">293 SKU · 6 154 шт.</div></div>
+      </div>
+      <div class="srow-item">
+        <div class="srow-icon">💰</div>
+        <div><div class="srow-label">Заморожено</div><div class="srow-val">1 470 020 ₸</div></div>
+      </div>
+      <div class="srow-item">
+        <div class="srow-icon">💵</div>
+        <div><div class="srow-label">Потенц. выручка</div><div class="srow-val">4 653 114 ₸</div></div>
+      </div>
+      <div class="srow-item">
+        <div class="srow-icon">🚨</div>
+        <div><div class="srow-label">Без продажной цены</div><div class="srow-val">9 000 ₸ (Лампа)</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px" class="card">
+      <div class="card-title">По категориям залежалого стока</div>
+      <div class="card-sub" style="margin-bottom:0">Суммы по закупу · ⚠ = нет продажной цены</div>
+      <div class="dead-grid" id="deadGrid"></div>
+    </div>
+  </section>
+
+
+  <!-- ⑤ ИНСАЙТЫ МАГАЗИНОВ ───────────────────────────────────────── -->
+  <section id="insights">
+    <p class="eyebrow">Аналитика · 8 магазинов</p>
+    <h2 class="sec-title">Инсайты по магазинам</h2>
+
+    <!-- KPI strip -->
+    <div class="insight-kpi-strip">
+      <div class="ikpi">
+        <div class="ikpi-val">8</div>
+        <div class="ikpi-label">магазинов</div>
+      </div>
+      <div class="ikpi">
+        <div class="ikpi-val" style="color:var(--am)">17,5 млн</div>
+        <div class="ikpi-label">закуп по магазинам, ₸</div>
+      </div>
+      <div class="ikpi">
+        <div class="ikpi-val" style="color:var(--re)">1,3 млн</div>
+        <div class="ikpi-label">неактив 6 мес., ₸</div>
+      </div>
+      <div class="ikpi">
+        <div class="ikpi-val" style="color:var(--re)">7,5%</div>
+        <div class="ikpi-label">средний % неактива</div>
+      </div>
+      <div class="ikpi">
+        <div class="ikpi-val" style="color:var(--re)">2,8 млн</div>
+        <div class="ikpi-label">неактив склад + магазины</div>
+      </div>
+    </div>
+
+    <!-- chart 1: stores -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Заморожено неактивом по магазинам — 6 месяцев</div>
+      <div class="card-sub">Левая часть — активный закуп, правая (красная) — деньги без движения · % показывает долю неактива</div>
+      <div class="legend" style="margin-top:8px">
+        <div class="legend-item"><div class="legend-swatch" style="background:#CBD5E1"></div>Активный закуп</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#EF4444"></div>Неактив 6 мес.</div>
+      </div>
+      <div class="chart-wrap" style="height:300px"><canvas id="storeChart"></canvas></div>
+    </div>
+
+    <!-- chart 2: systemic + anomalies -->
+    <div class="insight-grid">
+      <div class="card">
+        <div class="card-title">🔁 Системные залежи по категориям</div>
+        <div class="card-sub">Категории, зависшие одновременно в нескольких магазинах</div>
+        <div class="chart-wrap" style="height:320px;margin-top:12px"><canvas id="sysCatChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚨 Горячие точки</div>
+        <div class="card-sub">Аномально высокие суммы в конкретных магазинах</div>
+        <div id="anomalyList"></div>
+      </div>
+    </div>
+
+    <!-- recommendations -->
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">✅ Что делать прямо сейчас</div>
+      <div class="card-sub">Приоритетные действия по разморозке денег</div>
+      <ul class="reco-list" id="recoList"></ul>
+    </div>
+
+    <!-- вокзал top categories -->
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">🏪 Вокзал — топ категорий по закупу</div>
+      <div class="card-sub">Данные по складу магазина (неактив не предоставлен)</div>
+      <div class="tbl-wrap">
+        <table class="prod" id="vokzalTable">
+          <thead><tr>
+            <th>#</th><th>Категория</th>
+            <th class="r">SKU</th><th class="r">Кол-во</th><th class="r">Закуп, ₸</th>
+          </tr></thead>
+          <tbody id="vokzalTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const categories = [
+  { name:'Стекло',                 sku:775,  qty:75026, закуп:10953410, продажа:47663815 },
+  { name:'Чехлы для телефонов',    sku:1097, qty:38302, закуп:8584885,  продажа:27176940 },
+  { name:'USB',                    sku:78,   qty:4414,  закуп:2257371,  продажа:5615600  },
+  { name:'Зарядные устройства',    sku:48,   qty:1587,  закуп:1611998,  продажа:3996019  },
+  { name:'Адаптер',                sku:15,   qty:1031,  закуп:1316284,  продажа:4179630  },
+  { name:'Беспроводные наушники',  sku:15,   qty:798,   закуп:1075805,  продажа:3356430  },
+  { name:'9000',                   sku:10,   qty:134,   закуп:627508,   продажа:1458740  },
+  { name:'20ка',                   sku:67,   qty:935,   закуп:417025,   продажа:965170   },
+  { name:'Наушники',               sku:31,   qty:850,   закуп:317883,   продажа:785680   },
+  { name:'Лампа / Светильник',     sku:3,    qty:96,    закуп:224060,   продажа:564500   },
+  { name:'Флешка',                 sku:13,   qty:117,   закуп:136200,   продажа:281800   },
+  { name:'Атрибутика ⚠',          sku:4,    qty:89,    закуп:105000,   продажа:0        },
+  { name:'Номера',                 sku:5,    qty:196,   закуп:106000,   продажа:245200   },
+  { name:'Батарейка',              sku:15,   qty:249,   закуп:100678,   продажа:229350   },
+  { name:'AUX / Переходник',       sku:21,   qty:363,   закуп:66076,    продажа:205900   },
+  { name:'Аксессуары',             sku:13,   qty:647,   закуп:65952,    продажа:255540   },
+  { name:'Ремешки',                sku:7,    qty:248,   закуп:63482,    продажа:192400   },
+  { name:'Автодержатель/Модулятор',sku:16,   qty:95,    закуп:63319,    продажа:151870   },
+  { name:'Power bank',             sku:4,    qty:28,    закуп:50700,    продажа:104830   },
+  { name:'Держатель на телефон',   sku:8,    qty:310,   закуп:48900,    продажа:140160   },
+  { name:'Стекло Ультрафиолет',    sku:19,   qty:87,    закуп:40520,    продажа:182910   },
+  { name:'Магниты',                sku:2,    qty:303,   закуп:33900,    продажа:83700    },
+  { name:'Детский',                sku:8,    qty:173,   закуп:21372,    продажа:106510   },
+  { name:'Колонка / Микрофон',     sku:3,    qty:9,     закуп:16650,    продажа:43990    },
+  { name:'Телефон',                sku:1,    qty:1,     закуп:15000,    продажа:27000    },
+  { name:'Для ноутбука',           sku:6,    qty:9,     закуп:12650,    продажа:26890    },
+  { name:'Смарт часы',             sku:1,    qty:3,     закуп:1500,     продажа:2850     },
+  { name:'Удлинители',             sku:1,    qty:1,     закуп:1200,     продажа:3000     },
+];
+
+const topProducts = [
+  { name:'Наушники TG',            cat:'Беспроводные наушники', qty:536,  закуп:738072,  продажа:2090400 },
+  { name:'USB CABLE orig',         cat:'USB',                   qty:235,  закуп:705000,  продажа:1292500 },
+  { name:'Samsung адаптер 45W',    cat:'Адаптер',               qty:203,  закуп:487200,  продажа:1603700 },
+  { name:'Адаптер Samsung 25W',    cat:'Адаптер',               qty:196,  закуп:382200,  продажа:1352400 },
+  { name:'Apple адаптер',          cat:'9000',                  qty:57,   закуп:284715,  продажа:712500  },
+  { name:'USB TYPE-C TO TYPE-C 6600',cat:'USB',                 qty:92,   закуп:276000,  продажа:607200  },
+  { name:'Чехол книжка по 1500',   cat:'Чехлы',                 qty:653,  закуп:274260,  продажа:979500  },
+  { name:'20W адаптер orig',       cat:'9000',                  qty:59,   закуп:265500,  продажа:559910  },
+  { name:'iPhone 13/14 POLO',      cat:'Чехлы',                 qty:966,  закуп:215418,  продажа:666540  },
+  { name:'Кольцевая лампа MG36',   cat:'Лампа/Светильник',      qty:94,   закуп:210560,  продажа:554600  },
+];
+
+const deadBycat = [
+  { cat:'Стекло',              zakup:852524, pos:137, warn:false },
+  { cat:'20ка',                zakup:127508, pos:41,  warn:false },
+  { cat:'Чехлы',               zakup:79885,  pos:7,   warn:false },
+  { cat:'Стекло УФ',           zakup:40440,  pos:18,  warn:false },
+  { cat:'USB',                 zakup:37352,  pos:13,  warn:false },
+  { cat:'Автодержатель',       zakup:26240,  pos:4,   warn:false },
+  { cat:'AUX/Переходник',      zakup:21936,  pos:7,   warn:false },
+  { cat:'Адаптер',             zakup:19100,  pos:2,   warn:false },
+  { cat:'9000',                zakup:13600,  pos:2,   warn:false },
+  { cat:'Магниты',             zakup:10800,  pos:1,   warn:false },
+  { cat:'Наушники',            zakup:10170,  pos:9,   warn:false },
+  { cat:'Детский',             zakup:9782,   pos:6,   warn:false },
+  { cat:'Лампа / Светильник',  zakup:9000,   pos:1,   warn:true  },
+  { cat:'Батарейка',           zakup:8158,   pos:6,   warn:false },
+  { cat:'Держатель на тел.',   zakup:6600,   pos:2,   warn:false },
+  { cat:'Беспр. наушники',     zakup:5815,   pos:3,   warn:false },
+  { cat:'Аксессуары',          zakup:5360,   pos:4,   warn:false },
+  { cat:'Колонка/Микрофон',    zakup:4950,   pos:2,   warn:false },
+  { cat:'Для ноутбука',        zakup:3800,   pos:2,   warn:false },
+  { cat:'Флешка',              zakup:3650,   pos:3,   warn:false },
+  { cat:'Ремешки',             zakup:3250,   pos:2,   warn:false },
+  { cat:'Смарт часы',          zakup:1500,   pos:1,   warn:false },
+  { cat:'Удлинители',          zakup:1200,   pos:1,   warn:false },
+];
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt = n => n === 0 ? '—' : n.toLocaleString('ru-RU') + ' ₸';
+const fmtN = n => n.toLocaleString('ru-RU');
+
+// ── CATEGORY TABLE ────────────────────────────────────────────────────────────
+const totalZakup = categories.reduce((a,c)=>a+c.закуп,0);
+const catTbody = document.getElementById('catTbody');
+categories.forEach((c,i)=>{
+  const markup = c.продажа > 0 ? Math.round((c.продажа/c.закуп-1)*100)+'%' : '—';
+  const isWarn = c.продажа === 0;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="rank ${i<3?'r'+(i+1):'rn'}">${i+1}</span></td>
+    <td style="font-weight:600;color:var(--t1)${isWarn?';color:var(--am)':''}">${c.name}</td>
+    <td style="text-align:right;color:var(--t3);font-variant-numeric:tabular-nums">${fmtN(c.sku)}</td>
+    <td style="text-align:right;font-weight:700;color:var(--am);font-variant-numeric:tabular-nums">${fmtN(c.закуп)} ₸</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;color:${isWarn?'var(--re)':'var(--t2)'}">${isWarn?'⚠ нет цены':fmtN(c.продажа)+' ₸'}</td>
+    <td style="text-align:right;font-weight:600;color:var(--gr);font-variant-numeric:tabular-nums">${markup}</td>`;
+  catTbody.appendChild(tr);
+});
+
+// ── TOP PRODUCTS TABLE ────────────────────────────────────────────────────────
+const maxZakup = topProducts[0].закуп;
+const topTbody = document.getElementById('topTbody');
+topProducts.forEach((p,i)=>{
+  const pct = Math.round(p.закуп/maxZakup*100);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="rank ${i<3?'r'+(i+1):'rn'}">${i+1}</span></td>
+    <td>
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-cat">${p.cat}</div>
+    </td>
+    <td class="qty-cell">${fmtN(p.qty)} шт.</td>
+    <td>
+      <div style="font-weight:700;font-variant-numeric:tabular-nums;color:var(--am);margin-bottom:5px">${fmtN(p.закуп)} ₸</div>
+      <div class="barfield-bg"><div class="barfield-fg" style="width:${pct}%"></div></div>
+    </td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--gr);font-weight:600;white-space:nowrap">${fmtN(p.продажа)} ₸</td>`;
+  topTbody.appendChild(tr);
+});
+
+// ── DEAD STOCK GRID ───────────────────────────────────────────────────────────
+const deadGrid = document.getElementById('deadGrid');
+deadBycat.filter(d=>d.zakup>0).sort((a,b)=>b.zakup-a.zakup).forEach(d=>{
+  const el = document.createElement('div');
+  el.className = 'dead-item';
+  el.innerHTML = `
+    <div class="dead-cat">${d.warn?'⚠ ':''} ${d.cat}</div>
+    <div class="dead-val">${fmtN(d.zakup)} ₸</div>
+    <div class="dead-sub">${d.pos} поз.${d.warn?' · нет цены':''}</div>`;
+  deadGrid.appendChild(el);
+});
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+const top10 = categories.slice(0,10);
+const labels = top10.map(c=>c.name);
+const zakupData  = top10.map(c=>c.закуп);
+const prodData   = top10.map(c=>c.продажа);
+
+function getChartColors(){
+  const dark = document.documentElement.dataset.theme==='dark'||
+    (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme:dark)').matches);
+  return {
+    grid:      dark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)',
+    ticks:     dark?'#64748B':'#94A3B8',
+    zakupClr:  '#F59E0B',
+    prodClr:   '#0EA5E9',
+    activeBar: dark?'#334155':'#CBD5E1',
+  };
+}
+
+const ctx = document.getElementById('catChart').getContext('2d');
+let cc = getChartColors();
+
+const chart = new Chart(ctx, {
+  type:'bar',
+  data:{
+    labels,
+    datasets:[
+      { label:'Закуп (заморожено)',   data:zakupData, backgroundColor:'#F59E0B', borderRadius:3, borderSkipped:false },
+      { label:'Потенц. выручка', data:prodData, backgroundColor:'#0EA5E9', borderRadius:3, borderSkipped:false },
+    ]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true,
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(15,23,42,.92)',
+        titleColor:'#F1F5F9',
+        bodyColor:'#94A3B8',
+        borderColor:'rgba(255,255,255,.1)',
+        borderWidth:1,
+        padding:12,
+        callbacks:{
+          label:ctx=>{
+            const val = ctx.parsed.x;
+            return ` ${ctx.dataset.label}: ${val.toLocaleString('ru-RU')} ₸`;
+          }
+        }
+      }
+    },
+    scales:{
+      x:{
+        stacked:false,
+        grid:{color:cc.grid,drawBorder:false},
+        ticks:{color:cc.ticks,font:{family:'Inter',size:11},
+          callback:v=>v>=1e6?(v/1e6).toFixed(1)+' млн':v>=1e3?(v/1e3).toFixed(0)+' тыс':v},
+        border:{display:false}
+      },
+      y:{
+        stacked:false,
+        grid:{display:false},
+        ticks:{color:cc.ticks,font:{family:'Inter',size:12},padding:6},
+        border:{display:false}
+      }
+    }
+  }
+});
+
+function refreshChartColors(){
+  cc = getChartColors();
+  // category chart
+  chart.options.scales.x.grid.color = cc.grid;
+  chart.options.scales.x.ticks.color = cc.ticks;
+  chart.options.scales.y.ticks.color = cc.ticks;
+  chart.update();
+  // store chart
+  storeChartInst.data.datasets[0].backgroundColor = cc.activeBar;
+  storeChartInst.options.scales.x.grid.color = cc.grid;
+  storeChartInst.options.scales.x.ticks.color = cc.ticks;
+  storeChartInst.options.scales.y.ticks.color = cc.ticks;
+  storeChartInst.update();
+  // systemic categories chart
+  sysCatChartInst.options.scales.x.grid.color = cc.grid;
+  sysCatChartInst.options.scales.x.ticks.color = cc.ticks;
+  sysCatChartInst.options.scales.y.ticks.color = cc.ticks;
+  sysCatChartInst.update();
+}
+
+// ── THEME TOGGLE ──────────────────────────────────────────────────────────────
+const btn = document.getElementById('themeBtn');
+function isDark(){
+  const t = document.documentElement.dataset.theme;
+  return t==='dark'||(t===undefined&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+}
+btn.addEventListener('click',()=>{
+  const root = document.documentElement;
+  root.dataset.theme = isDark()?'light':'dark';
+  btn.textContent = isDark()?'☀️':'🌙';
+  refreshChartColors();
+});
+btn.textContent = isDark()?'☀️':'🌙';
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{ refreshChartColors(); btn.textContent=isDark()?'☀️':'🌙'; });
+
+// ── INSIGHTS DATA ────────────────────────────────────────────────────────────
+const stores = [
+  { name:'Жилгородок',    закуп:2479741, inactZakup:306386, inactSku:86,  pct:12.4 },
+  { name:'Хлебокомбинат', закуп:2162652, inactZakup:203369, inactSku:122, pct:9.4  },
+  { name:'Акация',        закуп:2477794, inactZakup:228249, inactSku:113, pct:9.2  },
+  { name:'Хромтау',       закуп:2776309, inactZakup:253532, inactSku:46,  pct:9.1  },
+  { name:'Шернияза',      закуп:3022052, inactZakup:155819, inactSku:56,  pct:5.2  },
+  { name:'Киселево',      закуп:2120919, inactZakup:75456,  inactSku:29,  pct:3.6  },
+  { name:'Вокзал',        закуп:2413853, inactZakup:null,   inactSku:null,pct:null  },
+  { name:'Орал',          закуп:null,    inactZakup:94966,  inactSku:24,  pct:null  },
+];
+
+const sysCats = [
+  { cat:'Стекло',              stores:7, pos:200, закуп:380692 },
+  { cat:'20ка',                stores:7, pos:98,  закуп:257036 },
+  { cat:'9000 (Apple)',         stores:5, pos:15,  закуп:210830 },
+  { cat:'Колонка/Микрофон',    stores:5, pos:9,   закуп:102737 },
+  { cat:'Флешка',              stores:5, pos:8,   закуп:63600  },
+  { cat:'Батарейка',           stores:6, pos:18,  закуп:35847  },
+  { cat:'AUX/Переходник',      stores:6, pos:22,  закуп:31600  },
+  { cat:'Автодержатель',       stores:5, pos:13,  закуп:22830  },
+  { cat:'Держатель на тел.',   stores:5, pos:12,  закуп:20888  },
+];
+
+const anomalies = [
+  { icon:'🏪', title:'Жилгородок — 9000 (Apple)', body:'5 позиций / 119 000 ₸ заморожено — дорогой товар без продаж полгода', val:'119 000 ₸' },
+  { icon:'🏪', title:'Хромтау — Стекло', body:'30 позиций / 162 293 ₸ — самый проблемный магазин по стеклу', val:'162 293 ₸' },
+  { icon:'🏪', title:'Шернияза — Колонка/Микрофон', body:'2 шт / 46 300 ₸ — крупногабаритный товар не продаётся', val:'46 300 ₸' },
+  { icon:'🏪', title:'Жилгородок — Колонка/Микрофон', body:'1 шт / 40 000 ₸ — одна единица лежит полгода', val:'40 000 ₸' },
+  { icon:'🏪', title:'Хромтау — Телефон', body:'1 шт / 43 000 ₸ — дорогая позиция без движения', val:'43 000 ₸' },
+  { icon:'🏪', title:'Акация — 20ка', body:'30 позиций / 94 566 ₸ — треть неактива магазина в одной категории', val:'94 566 ₸' },
+];
+
+const recommendations = [
+  { text:'<strong>Жилгородок</strong> — критично (12,4% неактива). Провести акцию или перекинуть Apple-товары (9000) и колонки на главный склад' },
+  { text:'<strong>Хромтау</strong> — телефон за 43 000 ₸ и стекло на 162 293 ₸ лежат без продаж. Уценить телефон или перевезти в другой магазин' },
+  { text:'<strong>Стекло и 20ка</strong> — системная проблема в 7 из 7 магазинов (637 000 ₸ суммарно). Пересмотреть ассортимент при следующих закупках — покупать только ходовые модели' },
+  { text:'<strong>9000 (Apple)</strong> — 210 830 ₸ зависло в 5 магазинах. Централизованно собрать и выставить на акцию или договориться о возврате поставщику' },
+  { text:'<strong>Колонки/Микрофоны</strong> — 5 магазинов, 102 737 ₸. Категория не продаётся — остановить закупки, распродать остатки со скидкой 30–40%' },
+];
+
+const vokzalCats = [
+  { cat:'Чехлы (все)',  sku:1417, qty:3378, закуп:1015240 },
+  { cat:'Стекло (все)', sku:390,  qty:4083, закуп:698012  },
+  { cat:'USB',          sku:64,   qty:342,  закуп:215774  },
+  { cat:'Зарядные',     sku:28,   qty:102,  закуп:96662   },
+  { cat:'9000 (все)',   sku:15,   qty:38,   закуп:141747  },
+  { cat:'АДАПТЕР',      sku:12,   qty:49,   закуп:56908   },
+  { cat:'Номера',       sku:6,    qty:56,   закуп:35800   },
+  { cat:'Наушники',     sku:8,    qty:45,   закуп:20400   },
+  { cat:'Автодержатель',sku:14,   qty:32,   закуп:18008   },
+  { cat:'РЕМЕШКИ',      sku:4,    qty:42,   закуп:16356   },
+];
+
+// ── STORE CHART (stacked horizontal bar) ─────────────────────────────────────
+const sortedStores = [...stores].sort((a,b)=>{
+  if(a.inactZakup===null&&b.inactZakup===null) return 0;
+  if(a.inactZakup===null) return 1;
+  if(b.inactZakup===null) return -1;
+  return a.inactZakup - b.inactZakup; // ascending → biggest bar on top for horizontal
+});
+const storeLabels = sortedStores.map(s=>
+  s.inactZakup===null ? s.name+' (нет данных)' : s.name
+);
+const activeBarData = sortedStores.map(s=>{
+  if(s.закуп===null) return 0;
+  if(s.inactZakup===null) return s.закуп;
+  return Math.max(0, s.закуп - s.inactZakup);
+});
+const inactBarData = sortedStores.map(s=>s.inactZakup||0);
+
+const storeCtx = document.getElementById('storeChart').getContext('2d');
+const storeChartInst = new Chart(storeCtx,{
+  type:'bar',
+  data:{
+    labels:storeLabels,
+    datasets:[
+      { label:'Активный закуп', data:activeBarData, backgroundColor:cc.activeBar, borderRadius:3, borderSkipped:false, stack:'s' },
+      { label:'Неактив 6 мес.', data:inactBarData,  backgroundColor:'#EF4444',   borderRadius:3, borderSkipped:false, stack:'s' },
+    ]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true,
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(15,23,42,.92)',
+        titleColor:'#F1F5F9',
+        bodyColor:'#94A3B8',
+        borderColor:'rgba(255,255,255,.1)',
+        borderWidth:1,
+        padding:12,
+        callbacks:{
+          afterTitle(items){
+            const s=sortedStores[items[0].dataIndex];
+            if(s.pct!==null) return `Доля неактива: ${s.pct}% · SKU: ${s.inactSku}`;
+            return 'Данные по неактиву не предоставлены';
+          },
+          label(ctx){
+            const v=ctx.parsed.x;
+            if(!v) return null;
+            return ` ${ctx.dataset.label}: ${v.toLocaleString('ru-RU')} ₸`;
+          }
+        }
+      }
+    },
+    scales:{
+      x:{stacked:true,grid:{color:cc.grid,drawBorder:false},ticks:{color:cc.ticks,font:{family:'Inter',size:11},callback:v=>v>=1e6?(v/1e6).toFixed(1)+' млн':v>=1e3?(v/1e3).toFixed(0)+' тыс':v},border:{display:false}},
+      y:{stacked:true,grid:{display:false},ticks:{color:cc.ticks,font:{family:'Inter',size:12},padding:6},border:{display:false}}
+    }
+  }
+});
+
+// ── SYSTEMIC CATEGORIES CHART (horizontal bar, color = store count) ──────────
+const sortedSysCats = [...sysCats].sort((a,b)=>a.закуп - b.закуп);
+const sysCatColors = sortedSysCats.map(c=>
+  c.stores>=7?'#EF4444':c.stores>=6?'#F97316':'#F59E0B'
+);
+
+// insert store-count color legend above sysCatChart
+(function(){
+  const wrap = document.getElementById('sysCatChart').parentElement;
+  const leg = document.createElement('div');
+  leg.className = 'legend';
+  leg.style.marginBottom = '4px';
+  leg.innerHTML = `
+    <div class="legend-item"><div class="legend-swatch" style="background:#EF4444"></div>7 магазинов</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#F97316"></div>6 магазинов</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#F59E0B"></div>5 магазинов</div>`;
+  wrap.parentElement.insertBefore(leg, wrap);
+})();
+
+const sysCatCtx = document.getElementById('sysCatChart').getContext('2d');
+const sysCatChartInst = new Chart(sysCatCtx,{
+  type:'bar',
+  data:{
+    labels:sortedSysCats.map(c=>c.cat),
+    datasets:[{
+      label:'Заморожено, ₸',
+      data:sortedSysCats.map(c=>c.закуп),
+      backgroundColor:sysCatColors,
+      borderRadius:3,
+      borderSkipped:false
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true,
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(15,23,42,.92)',
+        titleColor:'#F1F5F9',
+        bodyColor:'#94A3B8',
+        borderColor:'rgba(255,255,255,.1)',
+        borderWidth:1,
+        padding:12,
+        callbacks:{
+          label(ctx){
+            const c=sortedSysCats[ctx.dataIndex];
+            return [
+              ` Заморожено: ${ctx.parsed.x.toLocaleString('ru-RU')} ₸`,
+              ` Магазинов: ${c.stores}/7`,
+              ` Позиций: ${c.pos}`
+            ];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{grid:{color:cc.grid,drawBorder:false},ticks:{color:cc.ticks,font:{family:'Inter',size:11},callback:v=>v>=1e3?(v/1e3).toFixed(0)+' тыс':v},border:{display:false}},
+      y:{grid:{display:false},ticks:{color:cc.ticks,font:{family:'Inter',size:12},padding:6},border:{display:false}}
+    }
+  }
+});
+
+// anomalies
+const anomalyList = document.getElementById('anomalyList');
+anomalies.forEach(a=>{
+  const el = document.createElement('div');
+  el.className = 'anomaly-item';
+  el.innerHTML = `
+    <div class="anomaly-icon">${a.icon}</div>
+    <div>
+      <div class="anomaly-title">${a.title} — <span class="anomaly-val">${a.val}</span></div>
+      <div class="anomaly-body">${a.body}</div>
+    </div>`;
+  anomalyList.appendChild(el);
+});
+
+// recommendations
+const recoList = document.getElementById('recoList');
+recommendations.forEach((r,i)=>{
+  const li = document.createElement('li');
+  li.className = 'reco-item';
+  li.innerHTML = `<div class="reco-num">${i+1}</div><div class="reco-text">${r.text}</div>`;
+  recoList.appendChild(li);
+});
+
+// вокзал table
+const vTbody = document.getElementById('vokzalTbody');
+vokzalCats.forEach((c,i)=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="rank ${i<3?'r'+(i+1):'rn'}">${i+1}</span></td>
+    <td style="font-weight:600;color:var(--t1)">${c.cat}</td>
+    <td style="text-align:right;color:var(--t3)">${c.sku}</td>
+    <td style="text-align:right;color:var(--t3)">${fmtN(c.qty)} шт.</td>
+    <td style="text-align:right;font-weight:700;color:var(--am)">${fmtN(c.закуп)} ₸</td>`;
+  vTbody.appendChild(tr);
+});
+
+// ── SMOOTH NAV ────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = document.querySelector(tab.getAttribute('href'));
+    if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+
+// ── SCROLL SPY ────────────────────────────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const tabs = document.querySelectorAll('.tab');
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      tabs.forEach(t=>t.classList.toggle('active',t.getAttribute('href')==='#'+e.target.id));
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+sections.forEach(s=>observer.observe(s));
+</script>
